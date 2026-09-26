@@ -19,7 +19,7 @@ app.use('/api', router);
 // Root greeting & API info
 app.get('/', (_req, res) => {
   res.json({
-    name: 'GrouptripLedger API',
+    name: 'TripSync API',
     version: '1.0.0',
     description: 'Itinerary-aware group travel coordination and dynamic settlement ledger',
     endpoints: {
@@ -37,7 +37,7 @@ if (db.getTrips().length === 0) {
 }
 
 app.listen(PORT, () => {
-  console.log(`🚀 GrouptripLedger API Server running at http://localhost:${PORT}`);
+  console.log(`🚀 TripSync API Server running at http://localhost:${PORT}`);
 });
 
 export default app;

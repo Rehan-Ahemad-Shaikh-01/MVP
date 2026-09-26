@@ -29,13 +29,29 @@ export const recordPayment = (req: Request, res: Response) => {
     actorMemberId = fromMemberId,
   } = req.body;
 
-  if (!fromMemberId || amount === undefined || amount <= 0) {
+  const amountMinor = Number(amount);
+  if (!fromMemberId || !Number.isSafeInteger(amountMinor) || amountMinor <= 0) {
     return res.status(400).json({ success: false, error: 'fromMemberId and positive amount are required' });
   }
 
   const trip = db.getTripById(tripId);
   if (!trip) {
     return res.status(404).json({ success: false, error: 'Trip not found' });
+  }
+
+  if (currency !== trip.baseCurrency) {
+    return res.status(400).json({ success: false, error: `Payments must use the trip currency (${trip.baseCurrency})` });
+  }
+  const memberIds = new Set(db.getMembers(tripId).map((member) => member.id));
+  if (!memberIds.has(fromMemberId) || (toMemberId && !memberIds.has(toMemberId))) {
+    return res.status(400).json({ success: false, error: 'Payment members must belong to this trip' });
+  }
+  const destinationCount = Number(!!toPool) + Number(!!toVendorId) + Number(!!toMemberId);
+  if (destinationCount !== 1) {
+    return res.status(400).json({ success: false, error: 'Choose exactly one payment destination' });
+  }
+  if (toMemberId === fromMemberId) {
+    return res.status(400).json({ success: false, error: 'A member cannot settle a payment to themselves' });
   }
 
   const fromMember = db.getMemberById(fromMemberId);
@@ -49,7 +65,7 @@ export const recordPayment = (req: Request, res: Response) => {
     toPool: !!toPool,
     toVendorId: toVendorId || null,
     toMemberId: toMemberId || null,
-    amount: Math.round(Number(amount)),
+    amount: amountMinor,
     currency,
     method,
     appliesToCostItemId: appliesToCostItemId || null,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, CheckCircle2, ArrowRight, ShieldCheck, Compass } from 'lucide-react';
+import { Check, CheckCircle2, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useTrip } from '../context/TripContext.js';
 import { Avatar } from '../components/Avatar.js';
 import { formatCurrency, formatDate } from '../utils/formatters.js';
@@ -53,10 +53,8 @@ export const SettleUpScreen: React.FC = () => {
       <div className="bg-[#121829] text-white pt-8 pb-12 px-6">
         <div className="max-w-[880px] mx-auto">
           <div className="flex items-center gap-2 mb-4 anim-slide-left delay-0">
-            <div className="w-6 h-6 rounded-lg bg-indigo-500 flex items-center justify-center text-white text-xs">
-              <Compass className="w-3.5 h-3.5" />
-            </div>
-            <span className="font-extrabold text-sm text-slate-200">GrouptripLedger</span>
+            <img src="/tripsync-logo.svg" alt="" className="w-6 h-6 rounded-full object-contain" />
+            <span className="font-extrabold text-sm text-slate-200">TripSync</span>
           </div>
 
           <h1 className="text-3xl font-extrabold tracking-tight text-white mb-1.5 anim-fade-up delay-100">

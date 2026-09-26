@@ -42,7 +42,9 @@ export function detectInconsistencies(input: InconsistencyCheckInput): Inconsist
   // 2. Overpayments: sum of payments toward a specific item exceeds item total
   const paymentsByItem: Record<string, number> = {};
   for (const p of payments) {
-    if (p.status === 'confirmed' && p.appliesToCostItemId) {
+    if (p.status === 'confirmed' && p.appliesToCostItemId && !p.refundForCostItemId) {
+      const item = costItems.find((costItem) => costItem.id === p.appliesToCostItemId);
+      if (!item || p.currency !== item.currency) continue;
       paymentsByItem[p.appliesToCostItemId] = (paymentsByItem[p.appliesToCostItemId] || 0) + p.amount;
     }
   }
@@ -94,7 +96,7 @@ export function detectInconsistencies(input: InconsistencyCheckInput): Inconsist
 
   // 4. Overlapping timeframes for same member (double-booking detection)
   const activeItems = costItems.filter(
-    item => item.status !== 'cancelled' && item.status !== 'refunded' && item.startDatetime && item.endDatetime
+    item => item.status !== 'cancelled' && item.status !== 'refunded' && item.category !== 'stay' && item.startDatetime && item.endDatetime
   );
 
   for (let i = 0; i < activeItems.length; i++) {
@@ -107,14 +109,16 @@ export function detectInconsistencies(input: InconsistencyCheckInput): Inconsist
       const startB = new Date(itemB.startDatetime).getTime();
       const endB = new Date(itemB.endDatetime).getTime();
 
+      if (![startA, endA, startB, endB].every(Number.isFinite) || endA <= startA || endB <= startB) continue;
+
       // Check if time intervals overlap
       const hasOverlap = Math.max(startA, startB) < Math.min(endA, endB);
       if (hasOverlap) {
         // Find common participants
         const participantsA = new Set(itemA.participants.map(p => p.memberId));
-        const commonMemberIds = itemB.participants
+        const commonMemberIds = [...new Set(itemB.participants
           .map(p => p.memberId)
-          .filter(id => participantsA.has(id));
+          .filter(id => participantsA.has(id)))];
 
         for (const mid of commonMemberIds) {
           const memberName = memberMap.get(mid)?.displayName || 'A member';

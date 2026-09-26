@@ -25,6 +25,7 @@ import {
   participantWeightedSplitStrategy,
   sharedRoomSplitStrategy,
   activityBasedSplitStrategy,
+  customSplitStrategy,
   organizerPaidSplitStrategy,
 } from '../../core/splitStrategies.js';
 
@@ -72,6 +73,7 @@ export const CostItemEditor: React.FC = () => {
     'mem-charlie': 0.5,
     'mem-dave': 1.0,
   });
+  const [customShareInputs, setCustomShareInputs] = useState<Record<string, string>>({});
 
   const [rooms, setRooms] = useState<
     Array<{ roomId: string; roomName: string; occupantMemberIds: string[]; costOverride?: number }>
@@ -109,10 +111,28 @@ export const CostItemEditor: React.FC = () => {
       if (existingItem.splitRule.config && 'rooms' in existingItem.splitRule.config) {
         setRooms(existingItem.splitRule.config.rooms);
       }
+      if (existingItem.splitRule.config && 'shares' in existingItem.splitRule.config) {
+        setCustomShareInputs(Object.fromEntries(
+          Object.entries(existingItem.splitRule.config.shares as Record<string, number>)
+            .map(([memberId, amount]) => [memberId, (amount / 100).toFixed(2)])
+        ));
+      }
     }
   }, [editingItemId]);
 
   const totalAmountMinor = Math.round((parseFloat(amountStr) || 0) * 100);
+  const customSharesMinor = Object.fromEntries(
+    selectedMemberIds.map((memberId) => [
+      memberId,
+      Math.round((parseFloat(customShareInputs[memberId] || '') || 0) * 100),
+    ])
+  );
+  const customShareTotalMinor = Object.values(customSharesMinor).reduce((sum, amount) => sum + amount, 0);
+  const hasInvalidCustomInput = selectedMemberIds.some((memberId) => {
+    const rawValue = customShareInputs[memberId];
+    return rawValue !== undefined && rawValue.trim() !== '' && (!Number.isFinite(Number(rawValue)) || Number(rawValue) < 0);
+  });
+  const isCustomSplitValid = !hasInvalidCustomInput && customShareTotalMinor > 0 && customShareTotalMinor < totalAmountMinor;
 
   // Calculate live split preview using the pure strategy engine
   const computeLivePreview = (): Record<string, number> => {
@@ -137,6 +157,8 @@ export const CostItemEditor: React.FC = () => {
             ? { weights }
             : splitType === 'shared_room'
             ? { rooms }
+            : splitType === 'custom'
+            ? { shares: customSharesMinor }
             : null,
       },
       participants: selectedMemberIds.map((mid) => ({
@@ -159,6 +181,9 @@ export const CostItemEditor: React.FC = () => {
     }
     if (splitType === 'activity_based') {
       return activityBasedSplitStrategy(dummyItem, members, trip?.ownerId || '').memberShares;
+    }
+    if (splitType === 'custom') {
+      return customSplitStrategy(dummyItem, members, trip?.ownerId || '').memberShares;
     }
     if (splitType === 'organizer_paid') {
       return organizerPaidSplitStrategy(dummyItem, members, trip?.ownerId || '').memberShares;
@@ -196,6 +221,10 @@ export const CostItemEditor: React.FC = () => {
       alert('Please provide a title and positive expense amount');
       return;
     }
+    if (splitType === 'custom' && !isCustomSplitValid) {
+      alert('Custom shares must add up to more than zero and less than the total expense.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -212,9 +241,11 @@ export const CostItemEditor: React.FC = () => {
           config:
             splitType === 'participant_weighted'
               ? { weights }
-              : splitType === 'shared_room'
-              ? { rooms }
-              : {},
+            : splitType === 'shared_room'
+            ? { rooms }
+            : splitType === 'custom'
+            ? { shares: customSharesMinor }
+            : {},
         },
         participants: selectedMemberIds.map((mid) => ({
           memberId: mid,
@@ -366,7 +397,7 @@ export const CostItemEditor: React.FC = () => {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-xs">
-                    {currency === 'INR' ? '₹' : '$'}
+                    {trip?.baseCurrency === 'INR' ? '₹' : trip?.baseCurrency === 'EUR' ? '€' : trip?.baseCurrency === 'GBP' ? '£' : '$'}
                   </span>
                   <input
                     type="number"
@@ -378,15 +409,9 @@ export const CostItemEditor: React.FC = () => {
                     className="w-full bg-slate-50/60 border border-slate-200 rounded-xl pl-8 pr-3.5 py-2.5 text-xs font-extrabold text-slate-900 num-font focus:outline-indigo-600 focus:bg-white"
                   />
                 </div>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-700 focus:outline-indigo-600 cursor-pointer"
-                >
-                  <option value="INR">INR</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
+                <span className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-500">
+                  {trip?.baseCurrency || currency}
+                </span>
               </div>
             </div>
 
@@ -469,7 +494,7 @@ export const CostItemEditor: React.FC = () => {
               { id: 'participant_weighted', label: 'Weighted' },
               { id: 'shared_room', label: 'Shared room' },
               { id: 'activity_based', label: 'Activity-based' },
-              { id: 'organizer_paid', label: 'Organizer pays' },
+              { id: 'custom', label: 'Custom' },
             ].map((method) => {
               const isActive = splitType === method.id;
               return (
@@ -591,11 +616,55 @@ export const CostItemEditor: React.FC = () => {
               </div>
             )}
 
-            {splitType === 'organizer_paid' && (
-              <div className="text-center py-4">
-                <span className="text-xs text-indigo-700 font-semibold">
-                  🎁 Sponsored 100% by the Organizer / Host. All other participants owe 0.00.
-                </span>
+            {splitType === 'custom' && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900">Custom shares</h3>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Enter what each selected participant owes. The payer covers any amount left over.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {members
+                    .filter((member) => selectedMemberIds.includes(member.id))
+                    .map((member) => (
+                      <label
+                        key={member.id}
+                        className="flex items-center justify-between gap-4 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+                      >
+                        <span className="flex items-center gap-3">
+                          <Avatar name={member.displayName} id={member.id} size="sm" />
+                          <span className="font-bold text-xs text-slate-900">{member.displayName}</span>
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-[10px] text-slate-400">{currency}</span>
+                          <input
+                            aria-label={`${member.displayName} custom share`}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={customShareInputs[member.id] ?? ''}
+                            onChange={(event) => setCustomShareInputs((previous) => ({
+                              ...previous,
+                              [member.id]: event.target.value,
+                            }))}
+                            placeholder="0.00"
+                            className="w-32 text-right bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-indigo-600"
+                          />
+                        </span>
+                      </label>
+                    ))}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-xs">
+                  <span className="font-semibold text-slate-600">
+                    Assigned {formatCurrency(customShareTotalMinor, currency)} of {formatCurrency(totalAmountMinor, currency)}
+                  </span>
+                  <span className={`font-bold ${isCustomSplitValid ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    {isCustomSplitValid
+                      ? `${formatCurrency(totalAmountMinor - customShareTotalMinor, currency)} left for payer`
+                      : 'Shares must total more than zero and less than the expense'}
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -28,11 +28,13 @@ export function recalculateTripLedger(input: RecalculateInput): TripLedgerSnapsh
   // 1. Process active cost items and compute split shares
   const itemBreakdowns: Record<string, CostItemShareBreakdown> = {};
   let totalTripSpend = 0;
+  let totalCollected = 0;
 
   for (const item of costItems) {
     // Only non-cancelled / non-refunded items add to total spend
-    if (item.status !== 'cancelled' && item.status !== 'refunded') {
+    if (item.currency === trip.baseCurrency && item.status !== 'cancelled' && item.status !== 'refunded') {
       totalTripSpend += item.totalAmount;
+      if (item.paidByMemberId && item.currency === trip.baseCurrency) totalCollected += item.totalAmount;
     }
 
     const breakdown = computeSplitForCostItem(item, members, trip.ownerId);
@@ -57,6 +59,7 @@ export function recalculateTripLedger(input: RecalculateInput): TripLedgerSnapsh
 
   // 3. Accumulate grossOwed per member from item breakdowns
   for (const item of costItems) {
+    if (item.currency !== trip.baseCurrency) continue;
     const breakdown = itemBreakdowns[item.id];
     if (!breakdown) continue;
 
@@ -91,6 +94,7 @@ export function recalculateTripLedger(input: RecalculateInput): TripLedgerSnapsh
 
   // 4. Accumulate upfront payments (CostItems where paidByMemberId is set)
   for (const item of costItems) {
+    if (item.currency !== trip.baseCurrency) continue;
     if (item.status === 'cancelled' || item.status === 'refunded') continue;
 
     if (item.paidByMemberId && membersLedger[item.paidByMemberId]) {
@@ -99,13 +103,21 @@ export function recalculateTripLedger(input: RecalculateInput): TripLedgerSnapsh
   }
 
   // 5. Accumulate recorded payments
-  let totalCollected = 0;
   let poolBalance = 0;
 
   for (const p of payments) {
     if (p.status !== 'confirmed') continue;
 
-    totalCollected += p.amount;
+    if (p.currency !== trip.baseCurrency) continue;
+
+    if (p.refundForCostItemId) {
+      // Vendor refunds replenish the pool but are not a member contribution.
+      if (p.toPool) poolBalance += p.amount;
+      continue;
+    }
+
+    // Peer-to-peer settlements move an existing balance; they do not fund trip expenses.
+    if (!p.toMemberId) totalCollected += p.amount;
 
     if (p.toPool) {
       poolBalance += p.amount;

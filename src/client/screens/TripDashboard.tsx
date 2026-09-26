@@ -27,6 +27,7 @@ export const TripDashboard: React.FC = () => {
     costItems,
     payments,
     ledgerSnapshot,
+    settlementTransactions,
     inconsistencies,
     auditLogs,
     navigateTo,
@@ -42,6 +43,8 @@ export const TripDashboard: React.FC = () => {
   const totalSpend = ledgerSnapshot?.totalTripSpend ?? 0;
   const totalCollected = ledgerSnapshot?.totalCollected ?? 0;
   const outstanding = Math.max(0, totalSpend - totalCollected);
+  const settlementTotal = settlementTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+  const activeMemberCount = members.filter((member) => !member.leftAt).length;
   const collectedPercent = totalSpend > 0 ? Math.min(100, Math.round((totalCollected / totalSpend) * 100)) : 0;
 
   // Active member balance
@@ -85,6 +88,8 @@ export const TripDashboard: React.FC = () => {
         return 'WEIGHTED';
       case 'activity_based':
         return 'ACTIVITY BASED';
+      case 'custom':
+        return 'CUSTOM';
       case 'organizer_paid':
         return 'ORGANIZER PAID';
       default:
@@ -112,7 +117,7 @@ export const TripDashboard: React.FC = () => {
 
         {/* Total Collected with Progress Bar */}
         <div className="card p-6 bg-white border border-slate-200 anim-fade-up delay-100">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Total collected</span>
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Trip funding</span>
           <div className="text-3xl font-extrabold text-emerald-600 num-font tracking-tight">
             {formatCurrency(totalCollected, trip.baseCurrency)}
           </div>
@@ -128,12 +133,12 @@ export const TripDashboard: React.FC = () => {
 
         {/* Outstanding Balance */}
         <div className="card p-6 bg-white border border-slate-200 anim-fade-up delay-200">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Outstanding balance</span>
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Unfunded expenses</span>
           <div className="text-3xl font-extrabold text-rose-500 num-font tracking-tight">
             {formatCurrency(outstanding, trip.baseCurrency)}
           </div>
           <div className="mt-3 text-[11px] text-rose-500 font-semibold flex items-center gap-1">
-            <span>⚠️ {members.length} members tracking shares</span>
+            <span>⚠️ {activeMemberCount} active members tracking shares</span>
           </div>
         </div>
       </div>
@@ -269,16 +274,16 @@ export const TripDashboard: React.FC = () => {
               Ready to settle?
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed mb-6">
-              There are currently <strong className="text-white">{members.length} active balances</strong>{' '}
-              totaling <strong className="text-white">{formatCurrency(outstanding, trip.baseCurrency)}</strong>.
+              There are currently <strong className="text-white">{activeMemberCount} active balances</strong>{' '}
+              with <strong className="text-white">{formatCurrency(settlementTotal, trip.baseCurrency)}</strong> ready to settle.
               Settle up now to clear the derived ledger.
             </p>
 
             <div className="space-y-2 py-3 border-y border-white/10 text-xs text-slate-300 mb-6">
               <div className="flex justify-between">
-                <span>Total Outstanding</span>
-                <span className="font-bold text-white">
-                  {formatCurrency(outstanding, trip.baseCurrency)}
+                  <span>Ready to settle</span>
+                  <span className="font-bold text-white">
+                  {formatCurrency(settlementTotal, trip.baseCurrency)}
                 </span>
               </div>
               <div className="flex justify-between">

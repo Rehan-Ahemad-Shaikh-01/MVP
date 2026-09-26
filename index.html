@@ -10,10 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- 1. DEFINE LOGO FALLBACKS & INITIAL THEME IN HEAD (Before <img> tags load) -->
+  <!-- 1. DEFINE LOGO & LANDMARK FALLBACKS + INITIAL THEME IN HEAD -->
   <script>
     function createTripSyncLogoDataURI(mode) {
-      // For_light_mode.png has the dark circle background; For_dark_mode.png has the white circle background
       const isLightModeLogo = mode === 'light';
       const bgCircle = isLightModeLogo ? '#121212' : '#FFFFFF';
       const fgStroke = isLightModeLogo ? '#FFFFFF' : '#121212';
@@ -34,10 +33,29 @@
       return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
     }
 
+    // Automatic high-res SVG scenic poster fallback if any external landmark photo is blocked or offline
+    function createLandmarkFallbackURI(label, c1 = '#123D38', c2 = '#FF7968') {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 480">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${c1}"/>
+            <stop offset="100%" stop-color="${c2}"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="480" fill="url(#g)"/>
+        <circle cx="300" cy="110" r="48" fill="#FDE047" opacity="0.85"/>
+        <path d="M0 360 Q110 260 220 350 T400 320 L400 480 L0 480 Z" fill="rgba(0,0,0,0.28)"/>
+        <path d="M140 340 L140 230 Q200 160 260 230 L260 340 Z" fill="rgba(255,255,255,0.22)"/>
+        <circle cx="200" cy="175" r="18" fill="rgba(255,255,255,0.3)"/>
+        <text x="200" y="425" text-anchor="middle" fill="#FFFFFF" font-family="Urbanist, sans-serif" font-weight="700" font-size="24">${label}</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
     window.LIGHT_LOGO_FALLBACK = createTripSyncLogoDataURI('light');
     window.DARK_LOGO_FALLBACK = createTripSyncLogoDataURI('dark');
+    window.createLandmarkFallbackURI = createLandmarkFallbackURI;
 
-    // Apply saved or OS-preferred theme immediately to avoid flash
     (function initThemeEarly() {
       const saved = localStorage.getItem('tripsync-theme');
       const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -87,9 +105,7 @@
       transition: background-color 0.35s ease, color 0.35s ease;
     }
 
-    /* =====================================================
-       THEME-AWARE LOGO VISIBILITY (!important overrides Tailwind reset)
-       ===================================================== */
+    /* THEME-AWARE LOGO VISIBILITY */
     img.logo-light-theme {
       display: inline-block !important;
     }
@@ -103,21 +119,19 @@
       display: inline-block !important;
     }
 
-    /* =====================================================
-       DARK MODE SURFACE & TEXT OVERRIDES
-       ===================================================== */
+    /* DARK MODE SURFACE & TEXT OVERRIDES */
     html.dark body {
-      background-color: #081311;
+      background-color: #000206;
       color: #ECF4EE;
     }
     html.dark #main-frame {
-      background-color: #0E1F1C !important;
-      border-color: rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.65) !important;
+      background-color: #00040D !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85) !important;
     }
     html.dark header nav {
-      background-color: rgba(18, 38, 34, 0.9) !important;
-      border-color: rgba(255, 255, 255, 0.14) !important;
+      background-color: rgba(0, 4, 13, 0.82) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
     }
     html.dark .text-dark {
       color: #F0F7F2 !important;
@@ -129,85 +143,72 @@
     }
     html.dark .text-gray-500,
     html.dark .text-gray-400 {
-      color: #8FA99D !important;
+      color: #94AEA2 !important;
     }
     html.dark .bg-bento {
-      background-color: #152B26 !important;
-      border-color: rgba(255, 255, 255, 0.08) !important;
+      background-color: rgba(255, 255, 255, 0.04) !important;
+      backdrop-filter: blur(12px);
+      border-color: rgba(255, 255, 255, 0.09) !important;
     }
     html.dark .bg-white,
     html.dark .soft-card {
-      background-color: #1B3530 !important;
-      border-color: rgba(255, 255, 255, 0.09) !important;
+      background-color: rgba(16, 30, 42, 0.85) !important;
+      backdrop-filter: blur(10px);
+      border-color: rgba(255, 255, 255, 0.1) !important;
       color: #F0F7F2;
     }
-    html.dark #solutions .bg-white\/90 {
-      background-color: rgba(21, 43, 38, 0.92) !important;
+    html.dark #solutions .center-glass-card {
+      background-color: rgba(5, 14, 24, 0.88) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12);
     }
     html.dark .bg-gray-100,
     html.dark .bg-gray-50,
     html.dark .bg-gray-50\/90 {
-      background-color: #21403A !important;
+      background-color: rgba(255, 255, 255, 0.08) !important;
       border-color: rgba(255, 255, 255, 0.1) !important;
       color: #E2EFE8 !important;
     }
     html.dark .hero-line {
-      stroke: #244740;
+      stroke: rgba(255, 255, 255, 0.16);
     }
     html.dark .envelope-back {
-      background: linear-gradient(180deg, #1E3B35 0%, #152C27 100%);
+      background: linear-gradient(180deg, #162436 0%, #0B1320 100%);
     }
     html.dark .envelope-flap {
-      background: linear-gradient(180deg, #25463F 0%, #1B3530 100%);
+      background: linear-gradient(180deg, #1E3148 0%, #162436 100%);
     }
     html.dark .envelope-front {
-      background: linear-gradient(180deg, #1B3530 0%, #142925 100%);
+      background: linear-gradient(180deg, #162436 0%, #09101B 100%);
     }
     html.dark .demo-person[aria-pressed="false"] {
-      background: #142824 !important;
+      background: rgba(255, 255, 255, 0.04) !important;
     }
 
     /* 3D Glossy Squircles & Tactile Gradients */
     .glossy-purple {
       background: linear-gradient(180deg, #65A98A 0%, #21584B 100%);
-      box-shadow:
-        0 20px 38px -10px rgba(18, 61, 56, 0.34),
-        inset 0 2px 4px rgba(255, 255, 255, 0.6),
-        inset 0 -4px 8px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 20px 38px -10px rgba(18, 61, 56, 0.34), inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -4px 8px rgba(0, 0, 0, 0.25);
     }
-
     .glossy-orange {
       background: linear-gradient(180deg, #FF9580 0%, #E75D4F 100%);
-      box-shadow:
-        0 14px 28px -6px rgba(223, 89, 75, 0.32),
-        inset 0 2px 3px rgba(255, 255, 255, 0.55),
-        inset 0 -3px 6px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 14px 28px -6px rgba(223, 89, 75, 0.32), inset 0 2px 3px rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.22);
     }
-
     .glossy-yellow {
       background: linear-gradient(180deg, #F3E9AB 0%, #D7BE67 100%);
-      box-shadow:
-        0 14px 26px -6px rgba(234, 179, 8, 0.38),
-        inset 0 2px 4px rgba(255, 255, 255, 0.8);
+      box-shadow: 0 14px 26px -6px rgba(234, 179, 8, 0.38), inset 0 2px 4px rgba(255, 255, 255, 0.8);
     }
-
     .glossy-blue {
       background: linear-gradient(180deg, #9DCDB9 0%, #4D8875 100%);
-      box-shadow:
-        0 14px 26px -6px rgba(37, 99, 235, 0.38),
-        inset 0 2px 4px rgba(255, 255, 255, 0.6);
+      box-shadow: 0 14px 26px -6px rgba(37, 99, 235, 0.38), inset 0 2px 4px rgba(255, 255, 255, 0.6);
     }
-
     .soft-card {
       background: #FFFFFF;
       box-shadow: 0 14px 34px -8px rgba(0, 0, 0, 0.07), 0 2px 6px rgba(0,0,0,0.03);
     }
-
     .blur-word {
       display: inline-block;
       will-change: transform, opacity, filter;
     }
-
     .scroll-progress {
       position: fixed;
       z-index: 60;
@@ -219,50 +220,38 @@
       background: linear-gradient(90deg, #21584B, #72AE89 60%, #FF7968);
       pointer-events: none;
     }
-
     .trip-demo-card {
-      box-shadow: 0 28px 80px rgba(9, 40, 35, 0.22);
+      box-shadow: 0 28px 80px rgba(9, 40, 35, 0.28);
     }
 
     #footer-section {
-      background: #102622;
-      border-color: #29433b;
+      background: #0B1D1A;
+      border-color: rgba(255, 255, 255, 0.1);
       color: #edf4ee;
     }
-
-    #footer-section .text-dark { color: #f4f7f2; }
-    #footer-section .text-gray-500 { color: #b4c2ba; }
-    #footer-section a:hover { color: #d8ed94; }
+    html.dark #footer-section {
+      background: #00040D;
+    }
+    #footer-section .text-dark { color: #f4f7f2 !important; }
+    #footer-section .text-gray-500 { color: #b4c2ba !important; }
+    #footer-section a:hover { color: #d8ed94 !important; }
 
     .demo-person {
       transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
     }
-
     .demo-person:hover { transform: translateY(-2px); }
-
     .demo-person[aria-pressed="false"] {
       opacity: 0.45;
       background: #F5F7F3;
     }
-
     .demo-person[aria-pressed="true"] {
       border-color: #8EAD99;
     }
-
     #share-amount { transition: opacity 0.18s ease, transform 0.18s ease; }
     #share-amount.is-updating { transform: translateY(4px); opacity: 0.35; }
     #demo-sync.spinning { animation: demoSpin 0.55s ease; }
 
     @keyframes demoSpin { to { transform: rotate(360deg); } }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
 
     /* Infinite Vertical Conveyor Columns for Section 2 */
     @keyframes marqueeUp {
@@ -274,27 +263,26 @@
       100% { transform: translateY(0%); }
     }
     .conveyor-up {
-      animation: marqueeUp 22s linear infinite;
+      animation: marqueeUp 24s linear infinite !important;
     }
     .conveyor-down {
-      animation: marqueeDown 22s linear infinite;
+      animation: marqueeDown 24s linear infinite !important;
     }
     .fade-mask-y {
-      mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
     }
 
     /* SVG Data Pulse Animation */
     .pulse-dot {
       stroke-dasharray: 14 260;
       stroke-dashoffset: 274;
-      animation: pulseTravel 3.2s linear infinite;
+      animation: pulseTravel 3.2s linear infinite !important;
     }
     @keyframes pulseTravel {
       to { stroke-dashoffset: 0; }
     }
 
-    /* Realistic 3D Envelope Geometry */
     .envelope-back {
       background: linear-gradient(180deg, #E9F1EB 0%, #D6E6DC 100%);
       box-shadow: 0 28px 65px -15px rgba(18, 61, 56, 0.16);
@@ -309,21 +297,17 @@
       filter: drop-shadow(0 -5px 14px rgba(18, 61, 56, 0.09));
     }
 
-    /* Giant Footer Wordmark Wave & Progressive Blur */
+    /* Giant Footer Wordmark — Crisp, Sharp & High-Contrast */
     .footer-char {
       display: inline-block;
-      font-size: clamp(4.5rem, 16.5vw, 15.2rem);
-      line-height: 0.84;
+      font-size: clamp(4.5rem, 16.2vw, 15rem);
+      line-height: 0.86;
       letter-spacing: -0.04em;
-      background: linear-gradient(110deg, #123D38 0%, #37856E 48%, #FF7968 100%);
+      background: linear-gradient(110deg, #65A98A 0%, #9DCDB9 45%, #FF7968 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       will-change: transform, filter, opacity;
       user-select: none;
-      transition: filter 0.4s ease;
-    }
-    #footer-wordmark:hover .footer-char {
-      filter: blur(0px) !important;
     }
   </style>
 </head>
@@ -334,6 +318,27 @@
 
   <!-- OUTER DESKTOP LANDSCAPE CONTAINER -->
   <div id="main-frame" class="max-w-[1280px] mx-auto bg-white rounded-[36px] shadow-[0_30px_90px_rgba(0,0,0,0.10)] border border-white overflow-hidden relative transition-colors duration-300">
+
+    <!-- =====================================================
+         ATTACHED BACKGROUND VIDEO ("Untitled design.mp4")
+         Transparent ambient travel backdrop across the page
+         ===================================================== -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-[36px]">
+      <video
+        id="theme-video"
+        autoplay
+        loop
+        muted
+        playsinline
+        class="w-full h-full object-cover opacity-20 dark:opacity-25 transition-opacity duration-700 scale-105"
+      >
+        <source src="Untitled design.mp4" type="video/mp4" />
+        <source src="Untitled%20design.mp4" type="video/mp4" />
+        <source src="https://cdn.coverr.co/videos/coverr-drone-view-of-a-sandy-beach-5198/1080p.mp4" type="video/mp4" />
+      </video>
+      <!-- Soft radial & vertical glass wash so all typography stays razor-sharp -->
+      <div class="absolute inset-0 bg-gradient-to-b from-white/80 via-white/65 to-white/90 dark:from-[#00040D]/85 dark:via-[#00040D]/70 dark:to-[#00040D]/92 transition-colors duration-500"></div>
+    </div>
 
     <!-- STICKY FLOATING NAVBAR -->
     <header class="sticky top-5 z-50 flex justify-center px-4 pt-4">
@@ -358,12 +363,12 @@
         <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-700">
           <a href="#solutions" class="hover:text-black dark:hover:text-white transition">How it works</a>
           <a href="#bento" class="hover:text-black dark:hover:text-white transition">Features</a>
-          <a href="#footer-section" class="hover:text-black dark:hover:text-white transition">Pricing</a>
+          <a href="#demo" class="hover:text-black dark:hover:text-white transition">Live Split</a>
           <a href="#testimonials" class="hover:text-black dark:hover:text-white transition">Stories</a>
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Theme Toggle Button (Switches Light / Dark Mode + Swaps Logo) -->
+          <!-- Theme Toggle Button -->
           <button
             id="theme-toggle"
             type="button"
@@ -372,12 +377,10 @@
             title="Switch Light / Dark Theme"
             class="px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center gap-1.5 text-xs font-semibold text-dark transition cursor-pointer"
           >
-            <!-- Sun Icon (shown in Dark Mode) -->
             <svg id="theme-icon-sun" class="w-4 h-4 hidden text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="5"></circle>
               <path stroke-linecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
             </svg>
-            <!-- Moon Icon (shown in Light Mode) -->
             <svg id="theme-icon-moon" class="w-4 h-4 text-dark" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
@@ -395,9 +398,9 @@
     </header>
 
     <!-- =====================================================
-         SECTION 1: HERO (00:00 & 00:18 Loop Sequence)
+         SECTION 1: HERO (Indian Tourist Landmarks + Circuit Nodes)
          ===================================================== -->
-    <section id="hero" class="relative pt-6 pb-24 px-4 sm:px-8 overflow-hidden">
+    <section id="hero" class="relative z-10 pt-6 pb-24 px-4 sm:px-8 overflow-hidden">
       <div id="hero-stage" class="relative max-w-[900px] h-[290px] sm:h-[330px] mx-auto flex items-center justify-center">
 
         <!-- SVG Circuit Branches + Travelling Energy Pulses -->
@@ -409,32 +412,37 @@
           <path class="hero-line" d="M 510 165 L 775 165" stroke="#E5E7EB" stroke-width="2" fill="none"/>
           <path class="hero-line" d="M 510 180 L 605 180 Q 620 180 620 195 L 620 245 Q 620 260 635 260 L 690 260" stroke="#E5E7EB" stroke-width="2" fill="none"/>
 
-          <!-- Animated Glowing Pulses along Circuit -->
           <path class="pulse-dot" d="M 390 150 L 285 150 Q 270 150 270 135 L 270 85 Q 270 70 255 70 L 210 70" stroke="#62A98A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
           <path class="pulse-dot" d="M 510 150 L 585 150 Q 600 150 600 135 L 600 95 Q 600 80 615 80 L 670 80" stroke="#FF5B37" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-          <path class="pulse-dot" d="M 390 180 L 295 180 Q 280 180 280 195 L 280 240 Q 280 255 265 255 L 225 255" stroke="#A8C7A8" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+          <path class="pulse-dot" d="M 390 180 L 295 180 Q 280 180 280 195 L 280 240 Q 280 255 265 255 L 225 255" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" fill="none"/>
         </svg>
 
-        <!-- Left Node 1: Portrait -->
-        <div data-depth="0.25" class="hero-node magnetic-node absolute left-[4%] sm:left-[6%] top-[27%] w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] p-1.5 bg-white shadow-lg border border-gray-100">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80" alt="TripSync traveler" class="w-full h-full object-cover rounded-[18px]" />
+        <!-- Left Landmark 1: Taj Mahal, Agra -->
+        <div data-depth="0.25" class="hero-node magnetic-node absolute left-[3%] sm:left-[5%] top-[25%] w-24 h-24 sm:w-28 sm:h-28 rounded-[24px] p-1.5 bg-white shadow-lg border border-gray-100 overflow-hidden group">
+          <img
+            src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=600&q=80"
+            onerror="this.onerror=null;this.src=createLandmarkFallbackURI('Taj Mahal','#123D38','#4D8875');"
+            alt="Taj Mahal, Agra"
+            class="w-full h-full object-cover rounded-[18px] group-hover:scale-105 transition duration-500"
+          />
+          <span class="absolute bottom-2.5 left-2.5 bg-black/65 backdrop-blur-md text-white text-[9px] font-bold px-1.5 py-0.5 rounded">Taj Mahal</span>
         </div>
 
-        <!-- Left Node 2: Yellow Map -->
+        <!-- Left Node 2: Yellow Route Map Icon -->
         <div data-depth="0.4" class="hero-node magnetic-node absolute left-[18%] sm:left-[20%] top-[10%] w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] glossy-yellow flex items-center justify-center">
           <svg class="w-7 h-7 text-gray-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 6l7-3 7 3 4-2v15l-4 2-7-3-7 3V6zm7-3v15m7-12v15"/>
           </svg>
         </div>
 
-        <!-- Left Node 3: Blue Cup -->
+        <!-- Left Node 3: Blue Trophy / Milestone Icon -->
         <div data-depth="0.35" class="hero-node magnetic-node absolute left-[19%] sm:left-[22%] bottom-[9%] w-16 h-16 sm:w-20 sm:h-20 rounded-[22px] glossy-blue flex items-center justify-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M5 4v5a7 7 0 0014 0V4M5 9h14M12 16v6m-3 0h6M5 4H3m18 0h-2"/>
           </svg>
         </div>
 
-        <!-- Center sync mark (click to replay the intro) -->
+        <!-- Center Sync Squircle (Click to Replay Intro) -->
         <div id="hero-center-box" data-depth="0.15" title="Click to replay intro animation" class="magnetic-node relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-[30px] glossy-purple flex items-center justify-center cursor-pointer">
           <svg class="w-16 h-16" viewBox="0 0 64 64" fill="none">
             <circle id="hero-check-circle" cx="32" cy="32" r="26" stroke="rgba(255,255,255,0.85)" stroke-width="3" />
@@ -442,7 +450,7 @@
           </svg>
         </div>
 
-        <!-- Right Node 1: shared expense -->
+        <!-- Right Node 1: Shared Expense Card Icon -->
         <div data-depth="0.4" class="hero-node magnetic-node absolute right-[20%] sm:right-[23%] top-[12%] w-16 h-16 sm:w-20 sm:h-20 rounded-[22px] glossy-orange flex items-center justify-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-12 4h3m4 0h2"/>
@@ -459,21 +467,27 @@
           </div>
         </div>
 
-        <!-- Right Node 3: travel companion -->
-        <div data-depth="0.25" class="hero-node magnetic-node absolute right-[18%] sm:right-[21%] bottom-[8%] w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] p-1 bg-white shadow-md border border-gray-100">
-          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80" alt="Traveler" class="w-full h-full object-cover rounded-[15px]" />
+        <!-- Right Landmark 2: Hawa Mahal, Jaipur -->
+        <div data-depth="0.25" class="hero-node magnetic-node absolute right-[17%] sm:right-[20%] bottom-[6%] w-16 h-16 sm:w-20 sm:h-20 rounded-[20px] p-1 bg-white shadow-md border border-gray-100 overflow-hidden group">
+          <img
+            src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=400&q=80"
+            onerror="this.onerror=null;this.src=createLandmarkFallbackURI('Jaipur','#E75D4F','#D7BE67');"
+            alt="Hawa Mahal, Jaipur"
+            class="w-full h-full object-cover rounded-[15px] group-hover:scale-105 transition duration-500"
+          />
+          <span class="absolute bottom-1.5 left-1.5 bg-black/65 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">Jaipur</span>
         </div>
       </div>
 
       <!-- Hero Typography -->
-      <div class="text-center max-w-xl mx-auto mt-2">
+      <div class="text-center max-w-xl mx-auto mt-2 relative z-10">
         <h1 id="hero-title" class="text-5xl sm:text-6xl md:text-[68px] font-bold tracking-tight leading-[1.02] text-dark">
           <span class="blur-word">Everyone's</span>
           <span class="blur-word">trip.</span><br />
           <span class="blur-word">One balance, in sync.</span>
         </h1>
         <p id="hero-sub" class="mt-5 text-gray-500 text-base sm:text-lg max-w-md mx-auto leading-relaxed">
-          Split meals, stays, and spontaneous detours without the spreadsheet. TripSync keeps your whole crew's travel expenses clear and up to date.
+          Split meals, stays, and spontaneous detours across India without the spreadsheet. TripSync keeps your whole crew's travel expenses clear and up to date.
         </p>
         <div id="hero-cta" class="mt-8">
           <button onclick="openModal('Start your trip free')" class="glossy-orange text-white font-semibold px-9 py-4 rounded-2xl text-base transition-transform active:scale-95 hover:brightness-105">
@@ -485,65 +499,68 @@
     </section>
 
     <!-- =====================================================
-         SECTION 2: How It Works (00:01–00:03)
-         Infinite Counter-Scrolling Portrait Conveyor Streams
+         SECTION 2: How It Works
+         4 Infinite Vertical Conveyor Columns of Famous Indian Tourism Places
          ===================================================== -->
-    <section id="solutions" class="relative py-28 px-4 sm:px-10 overflow-hidden h-[700px] flex items-center justify-center">
+    <section id="solutions" class="relative z-10 py-28 px-4 sm:px-10 overflow-hidden h-[700px] flex items-center justify-center">
 
-      <!-- 4 Continuous Vertical Conveyor Columns -->
       <div class="hidden lg:grid grid-cols-4 gap-8 absolute inset-0 max-w-[1220px] mx-auto px-6 pointer-events-none fade-mask-y">
         
-        <!-- Column 1 (Glides Up) -->
+        <!-- Column 1 (Glides Up): Taj Mahal, Hawa Mahal, Gateway of India -->
         <div class="overflow-hidden h-full">
           <div class="conveyor-up flex flex-col gap-10 pb-10">
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Taj Mahal');" class="w-full h-full object-cover rounded-[20px]" alt="Taj Mahal"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Taj Mahal, Agra</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Hawa Mahal');" class="w-full h-full object-cover rounded-[20px]" alt="Hawa Mahal"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Hawa Mahal, Jaipur</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Gateway of India');" class="w-full h-full object-cover rounded-[20px]" alt="Gateway of India"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Gateway of India</span></div>
+            <!-- Duplicate set for seamless loop -->
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Taj Mahal');" class="w-full h-full object-cover rounded-[20px]" alt="Taj Mahal"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Taj Mahal, Agra</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Hawa Mahal');" class="w-full h-full object-cover rounded-[20px]" alt="Hawa Mahal"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Hawa Mahal, Jaipur</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Gateway of India');" class="w-full h-full object-cover rounded-[20px]" alt="Gateway of India"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Gateway of India</span></div>
           </div>
         </div>
 
-        <!-- Column 2 (Glides Down) -->
+        <!-- Column 2 (Glides Down): Qutub Minar, Amer Fort, India Gate -->
         <div class="overflow-hidden h-full -ml-6">
           <div class="conveyor-down flex flex-col gap-10 pb-10">
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('India Gate');" class="w-full h-full object-cover rounded-[20px]" alt="India Gate"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">India Gate, Delhi</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Dal Lake Kashmir');" class="w-full h-full object-cover rounded-[20px]" alt="Kashmir Dal Lake"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Dal Lake, Kashmir</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Goa Beaches');" class="w-full h-full object-cover rounded-[20px]" alt="Goa Coast"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Palolem Beach, Goa</span></div>
+            <!-- Duplicate set -->
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('India Gate');" class="w-full h-full object-cover rounded-[20px]" alt="India Gate"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">India Gate, Delhi</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1598091383021-15ddea10925d?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Dal Lake Kashmir');" class="w-full h-full object-cover rounded-[20px]" alt="Kashmir Dal Lake"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Dal Lake, Kashmir</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Goa Beaches');" class="w-full h-full object-cover rounded-[20px]" alt="Goa Coast"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Palolem Beach, Goa</span></div>
           </div>
         </div>
 
-        <!-- Column 3 (Glides Down) -->
+        <!-- Column 3 (Glides Down): Kerala Backwaters, Varanasi Ghats, Munnar -->
         <div class="overflow-hidden h-full ml-auto -mr-6">
           <div class="conveyor-down flex flex-col gap-10 pb-10">
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Kerala Backwaters');" class="w-full h-full object-cover rounded-[20px]" alt="Kerala Backwaters"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Kerala Backwaters</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Varanasi Ghats');" class="w-full h-full object-cover rounded-[20px]" alt="Varanasi Ghats"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Varanasi Ghats</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Munnar Hills');" class="w-full h-full object-cover rounded-[20px]" alt="Munnar Tea Hills"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Munnar Hills</span></div>
+            <!-- Duplicate set -->
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Kerala Backwaters');" class="w-full h-full object-cover rounded-[20px]" alt="Kerala Backwaters"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Kerala Backwaters</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Varanasi Ghats');" class="w-full h-full object-cover rounded-[20px]" alt="Varanasi Ghats"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Varanasi Ghats</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1506461883276-594a12b11cf3?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Munnar Hills');" class="w-full h-full object-cover rounded-[20px]" alt="Munnar Tea Hills"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Munnar Hills</span></div>
           </div>
         </div>
 
-        <!-- Column 4 (Glides Up) -->
+        <!-- Column 4 (Glides Up): Ladakh, Hampi, Udaipur -->
         <div class="overflow-hidden h-full flex justify-end">
           <div class="conveyor-up flex flex-col gap-10 pb-10">
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
-            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80" class="w-full h-full object-cover rounded-[20px]" alt=""/></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Ladakh');" class="w-full h-full object-cover rounded-[20px]" alt="Ladakh"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Pangong Lake, Ladakh</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Hampi Ruins');" class="w-full h-full object-cover rounded-[20px]" alt="Hampi"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Hampi Chariot</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Udaipur Palace');" class="w-full h-full object-cover rounded-[20px]" alt="Udaipur"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">City Palace, Udaipur</span></div>
+            <!-- Duplicate set -->
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Ladakh');" class="w-full h-full object-cover rounded-[20px]" alt="Ladakh"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Pangong Lake, Ladakh</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Hampi Ruins');" class="w-full h-full object-cover rounded-[20px]" alt="Hampi"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">Hampi Chariot</span></div>
+            <div class="w-40 h-48 rounded-[26px] p-2 bg-white shadow-lg relative overflow-hidden"><img src="https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?auto=format&fit=crop&w=400&q=80" onerror="this.src=createLandmarkFallbackURI('Udaipur Palace');" class="w-full h-full object-cover rounded-[20px]" alt="Udaipur"/><span class="absolute bottom-4 left-4 bg-black/65 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">City Palace, Udaipur</span></div>
           </div>
         </div>
       </div>
 
-      <!-- Three simple steps from invite to settle-up -->
-      <div class="relative z-10 text-center max-w-lg mx-auto bg-white/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_20px_60px_rgba(18,61,56,0.12)]">
+      <!-- Center Glassmorphic Content Card -->
+      <div class="center-glass-card relative z-10 text-center max-w-lg mx-auto bg-white/90 backdrop-blur-md p-6 sm:p-8 rounded-3xl shadow-[0_20px_60px_rgba(18,61,56,0.14)]">
         <div class="w-16 h-16 rounded-[18px] bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center mx-auto mb-5 shadow-sm p-1.5">
           <img
             src="For_light_mode.png"
@@ -563,7 +580,7 @@
           <span class="blur-word">balances.</span>
         </h2>
         <p class="blur-sub mt-4 text-gray-500 text-base sm:text-lg leading-relaxed">
-          Start a trip, invite your people, and add shared expenses as you go. TripSync keeps every share up to date.
+          Start a trip across India's iconic destinations, invite your people, and log shared expenses on the go.
         </p>
         <div id="trip-steps" class="trip-steps mt-7 grid grid-cols-3 gap-2 text-left">
           <div class="rounded-xl border border-emerald-100 bg-white p-3"><span class="block text-[10px] font-bold text-orange-500">01</span><span class="mt-1 block text-xs font-bold text-dark">Create a trip</span></div>
@@ -575,23 +592,23 @@
     </section>
 
     <!-- =====================================================
-         SECTION 3: TripSync tools and shared expense features
+         SECTION 3: Bento Grid Features
          ===================================================== -->
-    <section id="bento" class="py-20 px-4 sm:px-10">
+    <section id="bento" class="py-20 px-4 sm:px-10 relative z-10">
       <div class="text-center max-w-xl mx-auto mb-14">
         <h2 class="blur-heading text-5xl sm:text-6xl font-bold tracking-tight">
           <span class="blur-word">Every trip,</span> <span class="blur-word">all</span> <span class="blur-word">together.</span>
         </h2>
         <p class="blur-sub mt-3 text-gray-500 text-base sm:text-lg">
-          From shared meals to last-minute plan changes, TripSync keeps group expenses simple.
+          From houseboats in Kerala to cafes in Jaipur, TripSync keeps group expenses effortless.
         </p>
       </div>
 
       <!-- Top 3 Bento Cards -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        <!-- Card 1: shared spending breakdown -->
-        <div class="bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60">
+        <!-- Card 1: Shared Spending Breakdown -->
+        <div class="bento-card bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60">
           <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6">
             <div class="flex items-center justify-between text-xs text-gray-600 font-semibold mb-4">
               <span>Trip spend breakdown</span>
@@ -619,13 +636,13 @@
           <div>
             <h3 class="text-xl font-bold text-dark">Smart expense splitting</h3>
             <p class="text-sm text-gray-500 mt-1.5 leading-relaxed">
-              Add a shared cost once and see everyone's fair share without chasing receipts.
+              Add a shared cost once and see everyone's fair share without chasing paper bills.
             </p>
           </div>
         </div>
 
         <!-- Card 2: 3D Rolling Vertical Drum Ticker -->
-        <div class="bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
+        <div class="bento-card bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
           <div id="drum-stage" class="relative h-48 flex items-center justify-center my-auto overflow-hidden">
             <div class="drum-pill absolute w-full py-3.5 px-4 rounded-2xl bg-white shadow-md border border-gray-100 flex items-center justify-center gap-3 text-sm font-bold text-dark">
               <span class="w-7 h-7 rounded-lg glossy-blue flex items-center justify-center text-white text-xs">📊</span>
@@ -643,13 +660,13 @@
           <div>
             <h3 class="text-xl font-bold text-dark">Automatic recalculation</h3>
             <p class="text-sm text-gray-500 mt-1.5 leading-relaxed">
-              Plans change. Update a participant and the shared totals adjust with them.
+              Plans change. Update a participant and the shared totals adjust automatically.
             </p>
           </div>
         </div>
 
-        <!-- Card 3: payment and receipt tracking -->
-        <div class="bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60">
+        <!-- Card 3: Payment & Receipt Tracking -->
+        <div class="bento-card bg-bento rounded-[28px] p-6 flex flex-col justify-between border border-gray-200/60">
           <div class="relative h-48 flex items-center justify-center">
             <div id="legal-card-left" class="w-28 h-32 bg-white/80 rounded-2xl border border-gray-200/70 shadow-sm p-3 flex flex-col justify-end gap-1.5">
               <div class="w-2/3 h-2 bg-gray-200 rounded"></div>
@@ -670,7 +687,7 @@
           <div>
             <h3 class="text-xl font-bold text-dark">Payment tracking</h3>
             <p class="text-sm text-gray-500 mt-1.5 leading-relaxed">
-              Keep receipts, payments, and who's-paid-what in one shared trip ledger.
+              Keep receipts, UPI transfers, and who-paid-what in one shared trip ledger.
             </p>
           </div>
         </div>
@@ -679,34 +696,34 @@
       <!-- Bottom 2 Bento Cards -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mt-5">
 
-        <!-- Card 4: shared trip costs and split choices -->
-        <div class="lg:col-span-7 bg-bento rounded-[28px] p-6 sm:p-8 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
+        <!-- Card 4: Golden Triangle Tour Ledger + Split Curve -->
+        <div class="bento-card lg:col-span-7 bg-bento rounded-[28px] p-6 sm:p-8 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
               <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-bold text-dark">Goa getaway</span>
+                <span class="text-xs font-bold text-dark">Golden Triangle Tour</span>
                 <div class="flex items-center gap-1">
-                  <span class="text-[10px] bg-dark text-white font-semibold px-2 py-0.5 rounded-md">4 people</span>
+                  <span class="text-[10px] bg-dark text-white font-semibold px-2 py-0.5 rounded-md">4 sites</span>
                   <span class="text-[10px] bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-md">7 costs</span>
                 </div>
               </div>
               <div class="space-y-3">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80" class="w-8 h-8 rounded-full object-cover" alt=""/>
+                    <img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Taj');" class="w-8 h-8 rounded-full object-cover" alt="Taj Mahal"/>
                     <div>
-                      <p class="text-xs font-bold text-dark">Beach dinner</p>
-                      <p class="text-[10px] text-gray-400">Paid by Jamie</p>
+                      <p class="text-xs font-bold text-dark">Taj Mahal Entry</p>
+                      <p class="text-[10px] text-gray-400">Paid at Agra</p>
                     </div>
                   </div>
                   <span class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-md">₹3,200</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
-                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" class="w-8 h-8 rounded-full object-cover" alt=""/>
+                    <img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Jaipur');" class="w-8 h-8 rounded-full object-cover" alt="Hawa Mahal"/>
                     <div>
-                      <p class="text-xs font-bold text-dark">Villa groceries</p>
-                      <p class="text-[10px] text-gray-400">Paid by Maya</p>
+                      <p class="text-xs font-bold text-dark">Jaipur Heritage Dinner</p>
+                      <p class="text-[10px] text-gray-400">Paid at Hawa Mahal</p>
                     </div>
                   </div>
                   <span class="text-[10px] bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-md">₹1,840</span>
@@ -720,7 +737,7 @@
                 <div class="flex gap-1 text-[10px]">
                   <button onclick="switchChart('equal', this)" class="chart-tab text-gray-400 px-1.5 py-0.5 rounded">Equal</button>
                   <button onclick="switchChart('custom', this)" class="chart-tab bg-dark text-white px-2 py-0.5 rounded">Custom</button>
-                  <button onclick="switchChart('people', this)" class="chart-tab text-gray-400 px-1.5 py-0.5 rounded">By person</button>
+                  <button onclick="switchChart('people', this)" class="chart-tab text-gray-400 px-1.5 py-0.5 rounded">By site</button>
                 </div>
               </div>
               <svg viewBox="0 0 200 80" class="w-full h-20 overflow-visible">
@@ -739,20 +756,20 @@
           <div>
             <h3 class="text-xl font-bold text-dark">Every shared cost, together</h3>
             <p class="text-sm text-gray-500 mt-1 max-w-md">
-              Follow shared spending, who paid, and each traveler's running balance in one easy-to-scan trip view.
+              Follow shared spending, who paid, and each destination's running balance in one easy-to-scan trip view.
             </p>
           </div>
         </div>
 
-        <!-- Card 5: trip crew in a rotating orbit -->
-        <div class="lg:col-span-5 bg-bento rounded-[28px] p-6 sm:p-8 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
+        <!-- Card 5: 8 Indian Landmarks Orbiting Wheel -->
+        <div class="bento-card lg:col-span-5 bg-bento rounded-[28px] p-6 sm:p-8 flex flex-col justify-between border border-gray-200/60 overflow-hidden">
           <div class="relative h-56 flex items-center justify-center my-auto">
             <div id="orbit-wheel" class="relative w-48 h-48 rounded-full flex items-center justify-center"></div>
             <div class="absolute z-10 bg-white px-3.5 py-2 rounded-xl shadow-md border border-gray-100 flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-orange-50 flex items-center justify-center text-xs">🌴</span>
+              <span class="w-6 h-6 rounded-lg bg-orange-50 flex items-center justify-center text-xs">🕌</span>
               <div class="text-left">
-                <span class="block text-[9px] font-bold text-orange-500 uppercase tracking-wider">TRIP CREW</span>
-                <span class="text-xs font-bold text-dark">4 friends · Goa, India</span>
+                <span class="block text-[9px] font-bold text-orange-500 uppercase tracking-wider">INCREDIBLE INDIA</span>
+                <span class="text-xs font-bold text-dark">8 Iconic Circuits</span>
               </div>
             </div>
           </div>
@@ -760,7 +777,7 @@
           <div>
             <h3 class="text-xl font-bold text-dark">One live shared balance</h3>
             <p class="text-sm text-gray-500 mt-1">
-              Everyone sees the same up-to-date numbers when plans or people change.
+              Everyone sees the same up-to-date numbers when plans or stops change.
             </p>
           </div>
         </div>
@@ -768,13 +785,16 @@
       </div>
     </section>
 
-    <section id="demo" class="overflow-hidden bg-dark px-4 py-20 text-white sm:px-10 sm:py-24">
+    <!-- =====================================================
+         INTERACTIVE DEMO SECTION
+         ===================================================== -->
+    <section id="demo" class="overflow-hidden bg-dark px-4 py-20 text-white sm:px-10 sm:py-24 relative z-10">
       <div class="mx-auto grid max-w-5xl items-center gap-10 md:grid-cols-[0.8fr_1.2fr]">
         <div class="demo-copy">
           <p class="text-xs font-bold uppercase tracking-[0.18em] text-emerald-200">A little TripSync magic</p>
           <h2 class="blur-heading mt-3 text-4xl font-bold leading-tight sm:text-5xl"><span class="blur-word">Watch</span> <span class="blur-word">the</span> <span class="blur-word">split</span> <span class="blur-word">update.</span></h2>
-          <p class="blur-sub mt-4 max-w-sm text-sm leading-relaxed text-emerald-50/75">Plans change. Tap a traveler out and their share is instantly spread across the people who joined.</p>
-          <p class="mt-5 flex items-center gap-2 text-xs font-semibold text-emerald-200"><span class="h-2 w-2 rounded-full bg-orange-300"></span>Try the group below</p>
+          <p class="blur-sub mt-4 max-w-sm text-sm leading-relaxed text-emerald-50/75">Plans change. Tap a destination stop out and its share is instantly recalculated across the remaining stops.</p>
+          <p class="mt-5 flex items-center gap-2 text-xs font-semibold text-emerald-200"><span class="h-2 w-2 rounded-full bg-orange-300"></span>Click any stop below to test live</p>
         </div>
         <div class="trip-demo-card mx-auto w-full max-w-xl overflow-hidden rounded-3xl bg-white text-dark">
           <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
@@ -793,22 +813,22 @@
               />
               TripSync
             </span>
-            <span class="text-xs text-gray-400">Goa getaway · shared expense</span>
+            <span class="text-xs text-gray-400">Golden Triangle · shared expense</span>
           </div>
           <div class="p-5 sm:p-7">
             <div class="flex items-end justify-between gap-4">
-              <div><span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Beachside dinner</span><p class="mt-1 text-sm text-gray-500">Paid by Jamie</p></div>
+              <div><span class="text-xs font-semibold uppercase tracking-wider text-gray-400">Heritage Light & Sound Pass</span><p class="mt-1 text-sm text-gray-500">Booked for 4 iconic monuments</p></div>
               <strong class="text-2xl font-bold text-dark">₹18,400</strong>
             </div>
             <div class="my-5 h-px bg-gray-100"></div>
-            <div class="mb-3 flex items-center justify-between"><span class="text-xs font-semibold text-gray-600">In on this expense</span><span id="demo-count" class="text-xs text-gray-400">4 of 4 travelers</span></div>
+            <div class="mb-3 flex items-center justify-between"><span class="text-xs font-semibold text-gray-600">Included in this pass</span><span id="demo-count" class="text-xs text-gray-400">4 of 4 sites</span></div>
             <div id="demo-people" class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Jamie"><span class="grid h-8 w-8 place-items-center rounded-full bg-orange-100 text-sm font-bold text-gray-900">J</span><span class="text-xs font-semibold">Jamie</span></button>
-              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Maya"><span class="grid h-8 w-8 place-items-center rounded-full bg-rose-100 text-sm font-bold text-gray-900">M</span><span class="text-xs font-semibold">Maya</span></button>
-              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Alex"><span class="grid h-8 w-8 place-items-center rounded-full bg-lime-100 text-sm font-bold text-gray-900">A</span><span class="text-xs font-semibold">Alex</span></button>
-              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Sam"><span class="grid h-8 w-8 place-items-center rounded-full bg-sky-100 text-sm font-bold text-gray-900">S</span><span class="text-xs font-semibold">Sam</span></button>
+              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Taj Mahal"><span class="grid h-8 w-8 place-items-center rounded-full bg-orange-100 text-xs font-bold text-gray-900 overflow-hidden"><img src="https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Taj');" class="w-full h-full object-cover" alt="Taj Mahal"/></span><span class="text-xs font-semibold truncate">Taj Mahal</span></button>
+              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Hawa Mahal"><span class="grid h-8 w-8 place-items-center rounded-full bg-rose-100 text-xs font-bold text-gray-900 overflow-hidden"><img src="https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Hawa');" class="w-full h-full object-cover" alt="Hawa Mahal"/></span><span class="text-xs font-semibold truncate">Hawa Mahal</span></button>
+              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="Kerala"><span class="grid h-8 w-8 place-items-center rounded-full bg-lime-100 text-xs font-bold text-gray-900 overflow-hidden"><img src="https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Kerala');" class="w-full h-full object-cover" alt="Kerala"/></span><span class="text-xs font-semibold truncate">Alleppey</span></button>
+              <button class="demo-person flex items-center gap-2 rounded-xl border border-gray-200 p-2 text-left" type="button" aria-pressed="true" data-name="India Gate"><span class="grid h-8 w-8 place-items-center rounded-full bg-sky-100 text-xs font-bold text-gray-900 overflow-hidden"><img src="https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=200&q=80" onerror="this.src=createLandmarkFallbackURI('Delhi');" class="w-full h-full object-cover" alt="India Gate"/></span><span class="text-xs font-semibold truncate">India Gate</span></button>
             </div>
-            <div class="mt-5 flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-4 py-3" aria-live="polite"><span><span class="block text-xs font-semibold text-emerald-900 dark:text-emerald-200">Each person's share</span><span id="demo-note" class="mt-1 block text-[10px] text-emerald-800/70 dark:text-emerald-300/70">₹18,400 ÷ 4 travelers</span></span><strong id="share-amount" class="text-2xl font-bold text-emerald-900 dark:text-emerald-200">₹4,600</strong></div>
+            <div class="mt-5 flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-4 py-3" aria-live="polite"><span><span class="block text-xs font-semibold text-emerald-900 dark:text-emerald-200">Each site's share</span><span id="demo-note" class="mt-1 block text-[10px] text-emerald-800/70 dark:text-emerald-300/70">₹18,400 ÷ 4 sites</span></span><strong id="share-amount" class="text-2xl font-bold text-emerald-900 dark:text-emerald-200">₹4,600</strong></div>
             <div class="mt-3 flex items-center justify-between text-[10px] text-gray-400"><span class="flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Balances synced</span><svg id="demo-sync" class="h-4 w-4 text-emerald-800 dark:text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.6 9a7 7 0 0 1 11.9-2L20 9M4 15l2.5 2.5a7 7 0 0 0 11.9-2"/></svg></div>
           </div>
         </div>
@@ -816,9 +836,9 @@
     </section>
 
     <!-- =====================================================
-         SECTION 4: Flexible trip splits
+         SECTION 4: Flexible Trip Splits (Parabolic Arc)
          ===================================================== -->
-    <section id="integrations" class="py-24 px-4 sm:px-10 text-center overflow-hidden">
+    <section id="integrations" class="py-24 px-4 sm:px-10 text-center overflow-hidden relative z-10">
       <div class="w-14 h-14 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center mx-auto mb-5 shadow-sm">
         <svg class="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
@@ -843,92 +863,64 @@
     </section>
 
     <!-- =====================================================
-         SECTION 5: TripSync traveler stories
+         SECTION 5: 6-Slide Famous Indian Tourism Places Review Carousel
+         (3D Envelope Extraction -> Multi-Slide Arc Carousel)
          ===================================================== -->
-    <section id="testimonials" class="py-24 px-4 sm:px-10 text-center overflow-hidden">
+    <section id="testimonials" class="py-24 px-4 sm:px-10 text-center overflow-hidden relative z-10">
       <h2 class="blur-heading text-5xl sm:text-6xl font-bold tracking-tight">
         <span class="blur-word">More</span> <span class="blur-word">trip.</span> <span class="blur-word">Less</span> <span class="blur-word">tab</span> <span class="blur-word">keeping.</span>
       </h2>
       <p class="blur-sub mt-3 text-gray-500 text-base sm:text-lg max-w-md mx-auto">
-        The best group-trip upgrade is knowing where everyone stands, without the awkward follow-up.
+        Real group-trip stories from India's most iconic circuits — zero spreadsheet stress.
       </p>
 
-      <!-- 3-Card Arc + 3D Envelope Stage -->
+      <!-- 6-Slide 3D Arc + Envelope Stage -->
       <div id="testimonial-stage" class="relative max-w-5xl mx-auto mt-16 h-[430px] flex items-center justify-center">
 
+        <!-- 3D Envelope Back & Open Top Flap -->
         <div id="envelope-wrapper" class="absolute z-20 w-[370px] sm:w-[410px] h-[270px] bottom-4 pointer-events-none">
           <div class="envelope-flap absolute -top-[110px] left-0 w-full h-[112px]"></div>
           <div class="envelope-back absolute inset-0 rounded-b-[34px]"></div>
         </div>
 
-        <div id="tcard-0" class="t-card absolute w-72 sm:w-80 h-80 rounded-[28px] bg-gray-50/90 border border-gray-200/70 p-7 flex flex-col items-center justify-center shadow-sm pointer-events-none">
-          <div class="w-14 h-14 rounded-2xl bg-gray-200/70 mb-4"></div>
-          <div class="w-32 h-3.5 bg-gray-200/80 rounded mb-2"></div>
-          <div class="w-24 h-2.5 bg-gray-100 rounded mb-6"></div>
-          <div class="w-full h-2 bg-gray-100 rounded mb-2"></div>
-          <div class="w-5/6 h-2 bg-gray-100 rounded mb-2"></div>
-          <div class="w-4/6 h-2 bg-gray-100 rounded"></div>
-        </div>
+        <!-- Dynamic Review Cards Container (6 Indian Tourism Slides Injected via JS) -->
+        <div id="reviews-deck" class="relative w-full h-full flex items-center justify-center"></div>
 
-        <div id="tcard-1" class="t-card absolute z-20 w-80 sm:w-[350px] bg-white rounded-[28px] p-7 shadow-[0_20px_50px_rgba(0,0,0,0.09)] border border-gray-100 cursor-pointer">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded-2xl object-cover mx-auto shadow-sm" alt="TripSync traveler"/>
-          <h4 class="mt-4 text-xl font-bold text-dark">Nisha Kapoor</h4>
-          <p class="text-xs text-gray-400 font-medium">Rajasthan road trip · 6 friends</p>
-          <div class="flex items-center justify-center gap-1 mt-3 text-yellow-400 text-sm">
-            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-            <span class="text-xs font-bold text-dark ml-1">5.0</span>
-          </div>
-          <p class="mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">
-            "Three cities, six friends, and not one awkward money chat. TripSync kept the road-trip costs clear so we could just enjoy the ride."
-          </p>
-        </div>
-
-        <div id="tcard-2" class="t-card absolute z-10 w-80 sm:w-[350px] bg-white rounded-[28px] p-7 shadow-[0_20px_50px_rgba(0,0,0,0.09)] border border-gray-100 cursor-pointer">
-          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80" class="w-16 h-16 rounded-2xl object-cover mx-auto shadow-sm" alt="TripSync traveler"/>
-          <h4 class="mt-4 text-xl font-bold text-dark">Rohan Mehta</h4>
-          <p class="text-xs text-gray-400 font-medium">College reunion · Goa</p>
-          <div class="flex items-center justify-center gap-1 mt-3 text-yellow-400 text-sm">
-            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-            <span class="text-xs font-bold text-dark ml-1">5.0</span>
-          </div>
-          <p class="mt-4 text-xs sm:text-sm text-gray-600 leading-relaxed">
-            "Someone joined late and another friend skipped a day. The balances caught up before our group chat did."
-          </p>
-        </div>
-
-        <div id="tcard-3" class="t-card absolute w-72 sm:w-80 h-80 rounded-[28px] bg-gray-50/90 border border-gray-200/70 p-7 flex flex-col items-center justify-center shadow-sm pointer-events-none">
-          <div class="w-14 h-14 rounded-2xl bg-gray-200/70 mb-4"></div>
-          <div class="w-32 h-3.5 bg-gray-200/80 rounded mb-2"></div>
-          <div class="w-24 h-2.5 bg-gray-100 rounded mb-6"></div>
-          <div class="w-full h-2 bg-gray-100 rounded mb-2"></div>
-          <div class="w-5/6 h-2 bg-gray-100 rounded"></div>
-        </div>
-
+        <!-- 3D Envelope Front Pocket Overlay -->
         <div id="envelope-front-pocket" class="envelope-front absolute z-30 w-[370px] sm:w-[410px] h-[250px] bottom-4 rounded-b-[34px] pointer-events-none overflow-hidden">
           <svg class="w-full h-full opacity-35" viewBox="0 0 410 250" fill="none">
-            <line x1="0" y1="250" x2="205" y2="90" stroke="#C4B5FD" stroke-width="1.5"/>
-            <line x1="410" y1="250" x2="205" y2="90" stroke="#C4B5FD" stroke-width="1.5"/>
+            <line x1="0" y1="250" x2="205" y2="90" stroke="#65A98A" stroke-width="1.5"/>
+            <line x1="410" y1="250" x2="205" y2="90" stroke="#65A98A" stroke-width="1.5"/>
           </svg>
         </div>
       </div>
 
-      <div class="flex items-center justify-center gap-3 mt-4">
-        <button id="prev-test" class="w-11 h-11 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-600 shadow-sm transition active:scale-90">
-          ‹
-        </button>
-        <button id="next-test" class="w-11 h-11 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-600 shadow-sm transition active:scale-90">
-          ›
-        </button>
+      <!-- Slider Controls + 6 Destination Dots -->
+      <div class="flex flex-col items-center justify-center gap-4 mt-4">
+        <div class="flex items-center gap-3">
+          <button id="prev-test" type="button" aria-label="Previous Story" class="w-11 h-11 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-700 shadow-sm transition active:scale-90 cursor-pointer">
+            ‹
+          </button>
+          <div id="review-dots" class="flex items-center gap-2 px-2"></div>
+          <button id="next-test" type="button" aria-label="Next Story" class="w-11 h-11 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center text-gray-700 shadow-sm transition active:scale-90 cursor-pointer">
+            ›
+          </button>
+        </div>
       </div>
-      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-5 max-w-4xl mx-auto border-y border-emerald-100 dark:border-emerald-900/50 py-7">
-        <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">10,000+</strong><span class="text-xs text-gray-500">trips kept in sync</span></div>
+
+      <!-- Social Proof Metrics -->
+      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-5 max-w-4xl mx-auto border-y border-emerald-100 dark:border-emerald-900/50 py-7 relative z-10">
+        <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">10,000+</strong><span class="text-xs text-gray-500">Indian trips kept in sync</span></div>
         <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">₹2Cr+</strong><span class="text-xs text-gray-500">shared with clarity</span></div>
         <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">50,000+</strong><span class="text-xs text-gray-500">happy travelers</span></div>
-        <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">4.8 <span class="text-orange-400">★</span></strong><span class="text-xs text-gray-500">average trip rating</span></div>
+        <div><strong class="block text-2xl sm:text-3xl font-bold text-dark">4.9 <span class="text-orange-400">★</span></strong><span class="text-xs text-gray-500">average trip rating</span></div>
       </div>
     </section>
 
-    <section id="get-started" class="relative overflow-hidden bg-dark px-6 py-20 text-center text-white sm:py-24">
+    <!-- =====================================================
+         CTA BANNER
+         ===================================================== -->
+    <section id="get-started" class="relative overflow-hidden bg-dark px-6 py-20 text-center text-white sm:py-24 z-10">
       <div class="pointer-events-none absolute -top-28 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full border border-white/10 after:absolute after:inset-8 after:rounded-full after:border after:border-orange-200/20"></div>
       <div class="relative mx-auto max-w-2xl">
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200">Your next trip starts here</p>
@@ -939,9 +931,9 @@
     </section>
 
     <!-- =====================================================
-         SECTION 6: TripSync footer
+         SECTION 6: TripSync Footer (100% Sharp Wordmark Reveal)
          ===================================================== -->
-    <footer id="footer-section" class="pt-16 pb-2 px-6 sm:px-14 bg-bento/70 border-t border-gray-200/60 overflow-hidden">
+    <footer id="footer-section" class="pt-16 pb-4 px-6 sm:px-14 border-t border-gray-200/60 overflow-hidden relative z-10">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10">
         <div class="md:col-span-4">
           <p class="text-base font-semibold text-dark max-w-xs leading-snug">
@@ -1002,9 +994,9 @@
         </div>
       </div>
 
-      <!-- Giant Progressive-Blur Wave Wordmark -->
-      <div id="footer-wordmark" class="text-center pt-6 overflow-hidden whitespace-nowrap cursor-pointer">
-        <span class="footer-char font-extrabold" data-blur="0">T</span><span class="footer-char font-extrabold" data-blur="0.3">r</span><span class="footer-char font-extrabold" data-blur="0.8">i</span><span class="footer-char font-extrabold" data-blur="1.4">p</span><span class="footer-char font-extrabold" data-blur="2.2">S</span><span class="footer-char font-extrabold" data-blur="3.2">y</span><span class="footer-char font-extrabold" data-blur="4.2">n</span><span class="footer-char font-extrabold" data-blur="5.2">c</span>
+      <!-- Giant Crisp Wave Wordmark (Zero half-blur — animates from blur to 100% sharp) -->
+      <div id="footer-wordmark" class="text-center pt-6 pb-2 overflow-hidden whitespace-nowrap select-none">
+        <span class="footer-char font-extrabold">T</span><span class="footer-char font-extrabold">r</span><span class="footer-char font-extrabold">i</span><span class="footer-char font-extrabold">p</span><span class="footer-char font-extrabold">S</span><span class="footer-char font-extrabold">y</span><span class="footer-char font-extrabold">n</span><span class="footer-char font-extrabold">c</span>
       </div>
     </footer>
 
@@ -1039,16 +1031,100 @@
   </div>
 
   <!-- =====================================================
-       MASTER SCRIPTS: THEME ENGINE + LENIS + GSAP
+       MASTER SCRIPTS: THEME + VIDEO + LENIS + GSAP
        ===================================================== -->
   <script>
     /* -----------------------------------------------------------
-       THEME ENGINE (Manual Click + Automatic OS Theme Sync)
+       1. PARABOLIC ARC SPLIT METHODS
+    ----------------------------------------------------------- */
+    const toolsData = [
+      { name: "Equal split", desc: "Share the cost evenly with everyone." },
+      { name: "Custom amounts", desc: "Set a different share for each traveler." },
+      { name: "Only who's in", desc: "Leave out anyone who skipped that activity." },
+      { name: "Settle up simply", desc: "See who pays whom, with fewer transfers." },
+      { name: "Live balances", desc: "Every change updates the whole trip." }
+    ];
+    const splitGlyphs = [
+      '<circle cx="24" cy="14" r="6"/><path d="M12 36c1.5-6 6-9 12-9s10.5 3 12 9M6 24h8m20 0h8"/>',
+      '<path d="M24 6v36M9 15h30M9 33h30"/><circle cx="16" cy="15" r="4"/><circle cx="31" cy="33" r="4"/>',
+      '<circle cx="17" cy="17" r="6"/><circle cx="33" cy="17" r="6"/><path d="M5 38c1-6 5-9 12-9m2 9c1-6 5-9 12-9s11 3 12 9"/>',
+      '<path d="M8 15h25l-5-5m-4 19H8l5 5m20-19-5 5m-7 9 5-5"/>',
+      '<path d="M7 25h9l5-12 7 23 5-11h10"/><circle cx="7" cy="25" r="2"/><circle cx="43" cy="25" r="2"/>'
+    ];
+    toolsData.forEach((tool, index) => {
+      tool.svg = `<svg class="h-14 w-14 text-emerald-800 dark:text-emerald-300" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${splitGlyphs[index]}</svg>`;
+    });
+
+    const arcStage = document.getElementById("arc-stage");
+    let activeArcIdx = 0;
+
+    const arcCards = toolsData.map((tool, idx) => {
+      const el = document.createElement("div");
+      el.className = "absolute w-28 h-28 sm:w-32 sm:h-32 rounded-[28px] bg-bento border border-gray-200/80 flex items-center justify-center cursor-pointer select-none";
+      el.innerHTML = tool.svg;
+      el.onclick = () => {
+        activeArcIdx = idx;
+        positionArcCards(true);
+      };
+      if (arcStage) arcStage.appendChild(el);
+      return el;
+    });
+
+    function positionArcCards(animate = true) {
+      const isDark = document.documentElement.classList.contains('dark');
+      toolsData.forEach((tool, idx) => {
+        let diff = (idx - activeArcIdx) % toolsData.length;
+        if (diff > 2) diff -= toolsData.length;
+        if (diff < -2) diff += toolsData.length;
+
+        const isCenter = diff === 0;
+        const x = diff * 165;
+        const y = Math.pow(Math.abs(diff), 1.65) * 22;
+        const rot = diff * 13;
+        const scale = isCenter ? 1.12 : 0.92;
+
+        const card = arcCards[idx];
+        card.style.zIndex = isCenter ? 20 : 10 - Math.abs(diff);
+        card.style.backgroundColor = isCenter
+          ? (isDark ? "#162936" : "#FFFFFF")
+          : (isDark ? "rgba(255,255,255,0.05)" : "#F5F5F7");
+        card.style.boxShadow = isCenter ? "0 20px 45px -10px rgba(0,0,0,0.22)" : "none";
+
+        gsap.to(card, {
+          x: x,
+          y: y,
+          rotation: rot,
+          scale: scale,
+          opacity: Math.abs(diff) === 2 ? 0.75 : 1,
+          duration: animate ? 0.75 : 0,
+          ease: "power3.inOut"
+        });
+      });
+
+      const titleEl = document.getElementById("tool-title");
+      const descEl = document.getElementById("tool-desc");
+      if (animate && titleEl && descEl) {
+        gsap.fromTo([titleEl, descEl],
+          { opacity: 0, y: 8, filter: "blur(6px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "power2.out" }
+        );
+      }
+      if (titleEl) titleEl.textContent = toolsData[activeArcIdx].name;
+      if (descEl) descEl.textContent = toolsData[activeArcIdx].desc;
+    }
+
+    /* -----------------------------------------------------------
+       2. THEME ENGINE + ATTACHED BACKGROUND VIDEO ("Untitled design.mp4")
     ----------------------------------------------------------- */
     const htmlEl = document.documentElement;
     const sunIcon = document.getElementById('theme-icon-sun');
     const moonIcon = document.getElementById('theme-icon-moon');
     const themeLabel = document.getElementById('theme-label');
+    const themeVideo = document.getElementById('theme-video');
+
+    if (themeVideo) {
+      themeVideo.play().catch(() => {});
+    }
 
     function applyTheme(theme, saveToStorage = false) {
       const isDark = theme === 'dark';
@@ -1062,7 +1138,6 @@
         themeLabel.textContent = isDark ? 'Light' : 'Dark';
       }
 
-      // Explicitly guarantee all light/dark logo pairs swap cleanly
       document.querySelectorAll('img.logo-light-theme').forEach(img => {
         if (!img.complete || img.naturalWidth === 0) {
           img.src = window.LIGHT_LOGO_FALLBACK;
@@ -1087,24 +1162,21 @@
       applyTheme(nextTheme, true);
     };
 
-    // Initialize UI icons with current theme state
     applyTheme(htmlEl.classList.contains('dark') ? 'dark' : 'light', false);
 
-    // Listen for live OS / Browser Light <-> Dark mode changes automatically
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
       applyTheme(e.matches ? 'dark' : 'light', false);
     });
 
     /* -----------------------------------------------------------
-       LENIS + GSAP ANIMATIONS
+       3. LENIS SMOOTH SCROLL + GSAP INITIALIZATION
     ----------------------------------------------------------- */
     gsap.registerPlugin(ScrollTrigger);
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const lenis = new Lenis({
-      duration: prefersReducedMotion ? 0.01 : 1.15,
+      duration: 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: !prefersReducedMotion
+      smoothWheel: true
     });
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((time) => lenis.raf(time * 1000));
@@ -1121,49 +1193,6 @@
       }
     });
 
-    document.querySelectorAll("#bento .grid > div").forEach((card) => {
-      gsap.fromTo(card,
-        { y: 38, autoAlpha: 0, scale: 0.975 },
-        {
-          y: 0,
-          autoAlpha: 1,
-          scale: 1,
-          duration: prefersReducedMotion ? 0.01 : 0.72,
-          ease: "power3.out",
-          scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none reverse" }
-        }
-      );
-    });
-
-    gsap.fromTo("#trip-steps > div",
-      { y: 18, autoAlpha: 0 },
-      {
-        y: 0,
-        autoAlpha: 1,
-        stagger: 0.12,
-        duration: prefersReducedMotion ? 0.01 : 0.55,
-        scrollTrigger: { trigger: "#solutions", start: "top 62%", toggleActions: "play none none reverse" }
-      }
-    );
-
-    gsap.fromTo("#demo .trip-demo-card",
-      { y: 42, rotateX: 5, autoAlpha: 0 },
-      {
-        y: 0,
-        rotateX: 0,
-        autoAlpha: 1,
-        duration: prefersReducedMotion ? 0.01 : 0.8,
-        ease: "power3.out",
-        scrollTrigger: { trigger: "#demo", start: "top 72%", toggleActions: "play none none reverse" }
-      }
-    );
-
-    gsap.to("#hero-stage", {
-      y: 44,
-      ease: "none",
-      scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: 0.6 }
-    });
-
     function openModal(title) {
       document.getElementById('modal-title').textContent = title;
       const modal = document.getElementById('demo-modal');
@@ -1176,6 +1205,7 @@
       modal.classList.remove('flex');
     }
 
+    // Live Split Calculator in Demo Section
     const demoPeople = Array.from(document.querySelectorAll(".demo-person"));
     const demoCount = document.getElementById("demo-count");
     const demoShare = document.getElementById("share-amount");
@@ -1186,22 +1216,26 @@
     function updateDemoSplit(animate = true) {
       const included = demoPeople.filter((person) => person.getAttribute("aria-pressed") === "true");
       const count = included.length;
-      demoCount.textContent = `${count} of ${demoPeople.length} travelers`;
-      if (animate) demoShare.classList.add("is-updating");
+      if (demoCount) demoCount.textContent = `${count} of ${demoPeople.length} sites`;
+      if (animate && demoShare) demoShare.classList.add("is-updating");
       clearTimeout(splitUpdateTimer);
       splitUpdateTimer = setTimeout(() => {
         const share = count ? Math.round(18400 / count) : 0;
-        demoShare.textContent = new Intl.NumberFormat("en-IN", {
-          style: "currency",
-          currency: "INR",
-          maximumFractionDigits: 0
-        }).format(share);
-        demoNote.textContent = count
-          ? `₹18,400 ÷ ${count} ${count === 1 ? "traveler" : "travelers"}`
-          : "Choose at least one traveler";
-        demoShare.classList.remove("is-updating");
-      }, animate && !prefersReducedMotion ? 130 : 0);
-      if (animate) {
+        if (demoShare) {
+          demoShare.textContent = new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0
+          }).format(share);
+        }
+        if (demoNote) {
+          demoNote.textContent = count
+            ? `₹18,400 ÷ ${count} ${count === 1 ? "site" : "sites"}`
+            : "Choose at least one site";
+        }
+        if (demoShare) demoShare.classList.remove("is-updating");
+      }, animate ? 130 : 0);
+      if (animate && demoSync) {
         demoSync.classList.remove("spinning");
         void demoSync.offsetWidth;
         demoSync.classList.add("spinning");
@@ -1213,14 +1247,18 @@
       updateDemoSplit();
     }));
 
-    document.getElementById("newsletter-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      document.getElementById("newsletter-message").textContent = "You're on the list. See you out there!";
-      event.currentTarget.reset();
-    });
+    const newsletterForm = document.getElementById("newsletter-form");
+    if (newsletterForm) {
+      newsletterForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const msg = document.getElementById("newsletter-message");
+        if (msg) msg.textContent = "You're on the list. See you out there!";
+        event.currentTarget.reset();
+      });
+    }
 
     /* -----------------------------------------------------------
-       1. HERO CIRCUIT DRAW + CURSOR-TRACKING EYES + MAGNETIC PARALLAX
+       4. HERO CIRCUIT DRAW + IDLE FLOAT + MAGNETIC PARALLAX
     ----------------------------------------------------------- */
     const heroLines = document.querySelectorAll(".hero-line");
     heroLines.forEach(line => {
@@ -1230,8 +1268,8 @@
 
     const circleEl = document.getElementById("hero-check-circle");
     const tickEl = document.getElementById("hero-check-tick");
-    gsap.set(circleEl, { strokeDasharray: 170, strokeDashoffset: 170 });
-    gsap.set(tickEl, { strokeDasharray: 40, strokeDashoffset: 40 });
+    if (circleEl) gsap.set(circleEl, { strokeDasharray: 170, strokeDashoffset: 170 });
+    if (tickEl) gsap.set(tickEl, { strokeDasharray: 40, strokeDashoffset: 40 });
 
     function playHeroIntro() {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
@@ -1259,7 +1297,18 @@
         );
     }
     playHeroIntro();
-    document.getElementById("hero-center-box").addEventListener("click", playHeroIntro);
+    const centerBox = document.getElementById("hero-center-box");
+    if (centerBox) centerBox.addEventListener("click", playHeroIntro);
+
+    gsap.utils.toArray(".hero-node").forEach((node, i) => {
+      gsap.to(node, {
+        yPercent: i % 2 === 0 ? -9 : 9,
+        duration: 2.4 + (i * 0.22),
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    });
 
     const pupils = document.querySelectorAll(".eye-pupil");
     const magneticNodes = document.querySelectorAll(".magnetic-node");
@@ -1270,9 +1319,7 @@
         const eyeX = rect.left + rect.width / 2;
         const eyeY = rect.top + rect.height / 2;
         const angle = Math.atan2(e.clientY - eyeY, e.clientX - eyeX);
-        const moveX = Math.cos(angle) * 4;
-        const moveY = Math.sin(angle) * 5;
-        gsap.to(pupil, { x: moveX, y: moveY, duration: 0.2, overwrite: "auto" });
+        gsap.to(pupil, { x: Math.cos(angle) * 4, y: Math.sin(angle) * 5, duration: 0.2, overwrite: "auto" });
       });
 
       const normX = (e.clientX / window.innerWidth - 0.5) * 30;
@@ -1283,49 +1330,68 @@
           x: normX * depth,
           y: normY * depth,
           duration: 0.6,
-          ease: "power2.out"
+          ease: "power2.out",
+          overwrite: "auto"
         });
       });
     });
 
     /* -----------------------------------------------------------
-       2. WORD-BY-WORD BLUR REVEALS ACROSS SECTIONS
+       5. WORD-BY-WORD BLUR REVEALS & BENTO ANIMATIONS
     ----------------------------------------------------------- */
     document.querySelectorAll(".blur-heading").forEach(heading => {
       const words = heading.querySelectorAll(".blur-word");
-      gsap.from(words, {
-        scrollTrigger: { trigger: heading, start: "top 85%" },
-        y: 30,
-        opacity: 0,
-        filter: "blur(14px)",
-        duration: 0.7,
-        stagger: 0.09,
-        ease: "power3.out"
-      });
+      gsap.fromTo(words,
+        { y: 30, opacity: 0, filter: "blur(14px)" },
+        {
+          scrollTrigger: { trigger: heading, start: "top 88%", toggleActions: "play none none reverse" },
+          y: 0,
+          opacity: 1,
+          filter: "blur(0px)",
+          duration: 0.7,
+          stagger: 0.09,
+          ease: "power3.out"
+        }
+      );
     });
 
     document.querySelectorAll(".blur-sub").forEach(sub => {
-      gsap.from(sub, {
-        scrollTrigger: { trigger: sub, start: "top 88%" },
-        y: 20,
-        opacity: 0,
-        filter: "blur(10px)",
-        duration: 0.65,
-        ease: "power2.out"
-      });
+      gsap.fromTo(sub,
+        { y: 20, opacity: 0, filter: "blur(10px)" },
+        {
+          scrollTrigger: { trigger: sub, start: "top 90%", toggleActions: "play none none reverse" },
+          y: 0,
+          opacity: 1,
+          filter: "blur(0px)",
+          duration: 0.65,
+          ease: "power2.out"
+        }
+      );
     });
 
-    /* -----------------------------------------------------------
-       3. SECTION 3: BENTO ANIMATIONS
-    ----------------------------------------------------------- */
+    document.querySelectorAll(".bento-card").forEach((card, idx) => {
+      gsap.fromTo(card,
+        { y: 36, opacity: 0, scale: 0.97 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.7,
+          delay: (idx % 3) * 0.08,
+          ease: "power3.out",
+          scrollTrigger: { trigger: card, start: "top 88%", toggleActions: "play none none reverse" }
+        }
+      );
+    });
+
     document.querySelectorAll(".chart-bar").forEach(bar => {
       gsap.fromTo(bar,
         { height: "0%" },
         {
           height: bar.dataset.height,
-          duration: 1.2,
+          duration: 1.25,
           ease: "power3.out",
-          scrollTrigger: { trigger: "#bento", start: "top 75%" }
+          scrollTrigger: { trigger: "#bento", start: "top 78%", toggleActions: "play none none reverse" }
         }
       );
     });
@@ -1333,17 +1399,21 @@
     document.querySelectorAll(".pct-counter").forEach(el => {
       const target = parseFloat(el.dataset.target);
       const obj = { val: 0 };
-      gsap.to(obj, {
-        val: target,
-        duration: 1.2,
-        ease: "power3.out",
-        scrollTrigger: { trigger: "#bento", start: "top 75%" },
-        onUpdate: () => {
-          el.textContent = obj.val.toFixed(1) + "%";
+      gsap.fromTo(obj,
+        { val: 0 },
+        {
+          val: target,
+          duration: 1.25,
+          ease: "power3.out",
+          scrollTrigger: { trigger: "#bento", start: "top 78%", toggleActions: "play none none reverse" },
+          onUpdate: () => {
+            el.textContent = obj.val.toFixed(1) + "%";
+          }
         }
-      });
+      );
     });
 
+    // Card 2: 3D Rolling Vertical Drum Ticker
     const pills = Array.from(document.querySelectorAll(".drum-pill"));
     const slotStates = [
       { y: -54, scale: 0.88, opacity: 0.42, zIndex: 1, filter: "blur(1.5px)" },
@@ -1355,32 +1425,32 @@
     function applyDrumPositions(animate = true) {
       drumOrder.forEach((pillIndex, slotIndex) => {
         const state = slotStates[slotIndex];
-        gsap.to(pills[pillIndex], {
-          y: state.y,
-          scale: state.scale,
-          opacity: state.opacity,
-          zIndex: state.zIndex,
-          filter: state.filter,
-          duration: animate ? 0.65 : 0,
-          ease: "power3.inOut"
-        });
+        if (pills[pillIndex]) {
+          gsap.to(pills[pillIndex], {
+            y: state.y,
+            scale: state.scale,
+            opacity: state.opacity,
+            zIndex: state.zIndex,
+            filter: state.filter,
+            duration: animate ? 0.65 : 0,
+            ease: "power3.inOut"
+          });
+        }
       });
     }
     applyDrumPositions(false);
-    if (!prefersReducedMotion) {
-      setInterval(() => {
-        drumOrder.unshift(drumOrder.pop());
-        applyDrumPositions(true);
-      }, 2100);
-    }
+    setInterval(() => {
+      drumOrder.unshift(drumOrder.pop());
+      applyDrumPositions(true);
+    }, 2100);
 
     gsap.fromTo("#legal-card-left",
       { rotation: 0, x: 0 },
-      { rotation: -14, x: -22, duration: 1, ease: "back.out(1.7)", scrollTrigger: { trigger: "#bento", start: "top 70%" } }
+      { rotation: -14, x: -22, duration: 1, ease: "back.out(1.7)", scrollTrigger: { trigger: "#bento", start: "top 75%" } }
     );
     gsap.fromTo("#legal-card-right",
       { rotation: 0, x: 0 },
-      { rotation: 8, x: 14, duration: 1, ease: "back.out(1.7)", scrollTrigger: { trigger: "#bento", start: "top 70%" } }
+      { rotation: 8, x: 14, duration: 1, ease: "back.out(1.7)", scrollTrigger: { trigger: "#bento", start: "top 75%" } }
     );
     gsap.to("#legal-lock", { y: -6, rotation: -6, duration: 2.2, repeat: -1, yoyo: true, ease: "sine.inOut" });
 
@@ -1398,207 +1468,279 @@
       gsap.to("#training-area", { attr: { d: chartPaths[period].area }, duration: 0.45, ease: "power2.out" });
     };
 
-    const orbitAvatars = [
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80",
-      "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=120&q=80"
+    // Card 5: 8 Verified Indian Landmarks in Circular Orbit
+    const orbitLandmarks = [
+      { label: "Taj Mahal", src: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=250&q=80" },
+      { label: "Hawa Mahal", src: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=250&q=80" },
+      { label: "Mumbai", src: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=250&q=80" },
+      { label: "India Gate", src: "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=250&q=80" },
+      { label: "Kerala", src: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=250&q=80" },
+      { label: "Varanasi", src: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=250&q=80" },
+      { label: "Ladakh", src: "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=250&q=80" },
+      { label: "Hampi", src: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=250&q=80" }
     ];
     const orbitWheel = document.getElementById("orbit-wheel");
     const radius = 86;
-    orbitAvatars.forEach((src, i) => {
-      const angleRad = (i / orbitAvatars.length) * Math.PI * 2;
-      const angleDeg = (angleRad * 180) / Math.PI + 90;
-      const x = Math.cos(angleRad) * radius;
-      const y = Math.sin(angleRad) * radius;
-      const img = document.createElement("img");
-      img.src = src;
-      img.className = "absolute w-11 h-11 rounded-[14px] object-cover shadow-md border-2 border-white";
-      img.style.transform = `translate(${x}px, ${y}px) rotate(${angleDeg}deg)`;
-      orbitWheel.appendChild(img);
-    });
+    if (orbitWheel) {
+      orbitLandmarks.forEach((item, i) => {
+        const angleRad = (i / orbitLandmarks.length) * Math.PI * 2;
+        const angleDeg = (angleRad * 180) / Math.PI + 90;
+        const x = Math.cos(angleRad) * radius;
+        const y = Math.sin(angleRad) * radius;
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.alt = item.label;
+        img.onerror = function() {
+          this.onerror = null;
+          this.src = createLandmarkFallbackURI(item.label);
+        };
+        img.className = "absolute w-11 h-11 rounded-[14px] object-cover shadow-md border-2 border-white";
+        img.style.transform = `translate(${x}px, ${y}px) rotate(${angleDeg}deg)`;
+        orbitWheel.appendChild(img);
+      });
 
-    if (!prefersReducedMotion) {
       gsap.to("#orbit-wheel", {
         rotation: 360,
-        duration: 28,
+        duration: 26,
         repeat: -1,
         ease: "none"
       });
     }
 
+    positionArcCards(false);
+    setInterval(() => {
+      activeArcIdx = (activeArcIdx + 1) % toolsData.length;
+      positionArcCards(true);
+    }, 2600);
+
     /* -----------------------------------------------------------
-       4. SECTION 4: PARABOLIC ARC SPLIT METHODS
+       6. SECTION 5: 6-SLIDE FAMOUS INDIAN TOURISM PLACES CAROUSEL
+          (Starts in 3D Envelope, extracts on scroll, cycles 6 slides)
     ----------------------------------------------------------- */
-    const toolsData = [
-      { name: "Equal split", desc: "Share the cost evenly with everyone." },
-      { name: "Custom amounts", desc: "Set a different share for each traveler." },
-      { name: "Only who's in", desc: "Leave out anyone who skipped that activity." },
-      { name: "Settle up simply", desc: "See who pays whom, with fewer transfers." },
-      { name: "Live balances", desc: "Every change updates the whole trip." }
+    const tourismReviews = [
+      {
+        title: "Taj Mahal & Agra Fort Circuit",
+        subtitle: "Agra & Fatehpur Sikri · 6 friends",
+        rating: "5.0",
+        img: "https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=400&q=80",
+        quote: `"Sunrise tickets at the Taj, Mughal rooftop dinners, and highway cab splits — TripSync kept our entire 6-person Agra weekend balanced without a single spreadsheet."`
+      },
+      {
+        title: "Jaipur Royal Palaces Tour",
+        subtitle: "Hawa Mahal & Amer Fort · 5 travelers",
+        rating: "5.0",
+        img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=400&q=80",
+        quote: `"Two friends skipped the hot-air balloon ride over Amer Fort while the rest of us went. One tap in TripSync adjusted everyone's share automatically."`
+      },
+      {
+        title: "Kerala Backwaters Houseboat",
+        subtitle: "Alleppey & Munnar · 8 college friends",
+        rating: "5.0",
+        img: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=400&q=80",
+        quote: `"Splitting our private Alleppey houseboat, Munnar tea estate jeeps, and seafood feasts across 8 people took seconds. Best group travel app we've used."`
+      },
+      {
+        title: "Varanasi Ghats & Sarnath",
+        subtitle: "Dashashwamedh Ghat · 4 family members",
+        rating: "4.9",
+        img: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=400&q=80",
+        quote: `"From sunrise boat rides on the Ganges to Banarasi street food trails, logging shared cash expenses in real time saved us hours at the end of the trip."`
+      },
+      {
+        title: "Ladakh Himalayan Expedition",
+        subtitle: "Leh, Nubra & Pangong Lake · 6 riders",
+        rating: "5.0",
+        img: "https://images.unsplash.com/photo-1581793745862-99fde7fa73d2?auto=format&fit=crop&w=400&q=80",
+        quote: `"Bike fuel, inner-line permits, and Pangong lakeside camps paid by different riders every day — TripSync settled our 10-day Ladakh ledger in one click."`
+      },
+      {
+        title: "Hampi UNESCO Heritage Trail",
+        subtitle: "Virupaksha & Stone Chariot · 5 backpackers",
+        rating: "5.0",
+        img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=400&q=80",
+        quote: `"Coracle boat crossings, scooter rentals, and boulder-view guesthouses were effortless to track. Everyone knew who owed whom before we boarded the train home."`
+      }
     ];
-    const splitGlyphs = [
-      '<circle cx="24" cy="14" r="6"/><path d="M12 36c1.5-6 6-9 12-9s10.5 3 12 9M6 24h8m20 0h8"/>',
-      '<path d="M24 6v36M9 15h30M9 33h30"/><circle cx="16" cy="15" r="4"/><circle cx="31" cy="33" r="4"/>',
-      '<circle cx="17" cy="17" r="6"/><circle cx="33" cy="17" r="6"/><path d="M5 38c1-6 5-9 12-9m2 9c1-6 5-9 12-9s11 3 12 9"/>',
-      '<path d="M8 15h25l-5-5m-4 19H8l5 5m20-19-5 5m-7 9 5-5"/>',
-      '<path d="M7 25h9l5-12 7 23 5-11h10"/><circle cx="7" cy="25" r="2"/><circle cx="43" cy="25" r="2"/>'
-    ];
-    toolsData.forEach((tool, index) => {
-      tool.svg = `<svg class="h-14 w-14 text-emerald-800 dark:text-emerald-300" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${splitGlyphs[index]}</svg>`;
+
+    const reviewsDeck = document.getElementById("reviews-deck");
+    const reviewDotsContainer = document.getElementById("review-dots");
+    const envBack = document.getElementById("envelope-wrapper");
+    const envFront = document.getElementById("envelope-front-pocket");
+
+    let activeReviewIdx = 0;
+    let envelopeExtracted = false;
+
+    const reviewCardEls = tourismReviews.map((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "t-card absolute w-80 sm:w-[360px] bg-white rounded-[28px] p-7 shadow-[0_20px_50px_rgba(0,0,0,0.10)] border border-gray-100 cursor-pointer select-none";
+      card.innerHTML = `
+        <div class="relative w-16 h-16 mx-auto">
+          <img src="${item.img}" onerror="this.onerror=null;this.src=createLandmarkFallbackURI('${item.title.split(' ')[0]}');" class="w-16 h-16 rounded-2xl object-cover shadow-sm border border-gray-100" alt="${item.title}"/>
+          <span class="absolute -bottom-1 -right-1 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">🇮🇳</span>
+        </div>
+        <h4 class="mt-4 text-lg sm:text-xl font-bold text-dark">${item.title}</h4>
+        <p class="text-xs text-gray-400 font-medium">${item.subtitle}</p>
+        <div class="flex items-center justify-center gap-1 mt-2.5 text-yellow-400 text-sm">
+          <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+          <span class="text-xs font-bold text-dark ml-1">${item.rating}</span>
+        </div>
+        <p class="mt-3.5 text-xs sm:text-sm text-gray-600 leading-relaxed">${item.quote}</p>
+      `;
+      card.addEventListener("click", () => {
+        activeReviewIdx = idx;
+        renderReviewDeck(true);
+      });
+      reviewsDeck.appendChild(card);
+      return card;
     });
 
-    const arcStage = document.getElementById("arc-stage");
-    const arcCards = toolsData.map((tool, idx) => {
-      const el = document.createElement("div");
-      el.className = "absolute w-28 h-28 sm:w-32 sm:h-32 rounded-[28px] bg-bento border border-gray-200/80 flex items-center justify-center cursor-pointer select-none";
-      el.innerHTML = tool.svg;
-      el.onclick = () => {
-        activeArcIdx = idx;
-        positionArcCards(true);
-      };
-      arcStage.appendChild(el);
-      return el;
+    const dotEls = tourismReviews.map((item, idx) => {
+      const dot = document.createElement("button");
+      dot.type = "button";
+      dot.ariaLabel = `Show ${item.title}`;
+      dot.className = "h-2 rounded-full transition-all duration-300 bg-gray-300 w-2";
+      dot.addEventListener("click", () => {
+        activeReviewIdx = idx;
+        renderReviewDeck(true);
+      });
+      reviewDotsContainer.appendChild(dot);
+      return dot;
     });
 
-    let activeArcIdx = 0;
+    // Initial state inside the 3D envelope before scroll
+    function setInitialEnvelopeState() {
+      envelopeExtracted = false;
+      gsap.set([envBack, envFront], { y: 0, opacity: 1, scale: 1 });
+      reviewCardEls.forEach((card, idx) => {
+        if (idx === 0) {
+          gsap.set(card, { x: 0, y: 22, rotation: 7, scale: 0.95, opacity: 1, zIndex: 25, filter: "blur(0px)" });
+        } else {
+          gsap.set(card, { x: 380, y: 50, rotation: 14, scale: 0.85, opacity: 0, zIndex: 5, filter: "blur(3px)" });
+        }
+      });
+    }
+    setInitialEnvelopeState();
 
-    function positionArcCards(animate = true) {
-      const isDark = document.documentElement.classList.contains('dark');
-      toolsData.forEach((tool, idx) => {
-        let diff = (idx - activeArcIdx) % toolsData.length;
-        if (diff > 2) diff -= toolsData.length;
-        if (diff < -2) diff += toolsData.length;
+    // Positions all 6 Indian landmark review cards in a 3-Card Arc (Left Ghost, Center Active, Right Ghost)
+    function renderReviewDeck(animate = true) {
+      const total = tourismReviews.length;
+      reviewCardEls.forEach((card, idx) => {
+        let diff = (idx - activeReviewIdx) % total;
+        if (diff > total / 2) diff -= total;
+        if (diff < -total / 2) diff += total;
 
-        const isCenter = diff === 0;
-        const x = diff * 165;
-        const y = Math.pow(Math.abs(diff), 1.65) * 22;
-        const rot = diff * 13;
-        const scale = isCenter ? 1.12 : 0.92;
-
-        const card = arcCards[idx];
-        card.style.zIndex = isCenter ? 20 : 10 - Math.abs(diff);
-        card.style.backgroundColor = isCenter
-          ? (isDark ? "#1B3530" : "#FFFFFF")
-          : (isDark ? "#152B26" : "#F5F5F7");
-        card.style.boxShadow = isCenter ? "0 20px 45px -10px rgba(0,0,0,0.18)" : "none";
+        let props;
+        if (diff === 0) {
+          props = { x: 0, y: -10, rotation: 0, scale: 1, opacity: 1, zIndex: 25, filter: "blur(0px)" };
+        } else if (diff === -1) {
+          props = { x: -365, y: 26, rotation: -11, scale: 0.9, opacity: 0.52, zIndex: 15, filter: "blur(1.2px)" };
+        } else if (diff === 1) {
+          props = { x: 365, y: 26, rotation: 11, scale: 0.9, opacity: 0.52, zIndex: 15, filter: "blur(1.2px)" };
+        } else if (diff < -1) {
+          props = { x: -680, y: 75, rotation: -20, scale: 0.8, opacity: 0, zIndex: 5, filter: "blur(4px)" };
+        } else {
+          props = { x: 680, y: 75, rotation: 20, scale: 0.8, opacity: 0, zIndex: 5, filter: "blur(4px)" };
+        }
 
         gsap.to(card, {
-          x: x,
-          y: y,
-          rotation: rot,
-          scale: scale,
-          opacity: Math.abs(diff) === 2 ? 0.75 : 1,
+          ...props,
           duration: animate ? 0.75 : 0,
           ease: "power3.inOut"
         });
       });
 
-      const titleEl = document.getElementById("tool-title");
-      const descEl = document.getElementById("tool-desc");
-      if (animate) {
-        gsap.fromTo([titleEl, descEl],
-          { opacity: 0, y: 8, filter: "blur(6px)" },
-          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.45, ease: "power2.out" }
-        );
-      }
-      titleEl.textContent = toolsData[activeArcIdx].name;
-      descEl.textContent = toolsData[activeArcIdx].desc;
-    }
-
-    positionArcCards(false);
-    if (!prefersReducedMotion) {
-      setInterval(() => {
-        activeArcIdx = (activeArcIdx + 1) % toolsData.length;
-        positionArcCards(true);
-      }, 2600);
-    }
-
-    /* -----------------------------------------------------------
-       5. SECTION 5: 3D ENVELOPE EXTRACTION & 3-CARD ARC
-    ----------------------------------------------------------- */
-    const tCard0 = document.getElementById("tcard-0");
-    const tCard1 = document.getElementById("tcard-1");
-    const tCard2 = document.getElementById("tcard-2");
-    const tCard3 = document.getElementById("tcard-3");
-    const envBack = document.getElementById("envelope-wrapper");
-    const envFront = document.getElementById("envelope-front-pocket");
-
-    function setInitialEnvelopeState() {
-      gsap.set([envBack, envFront], { y: 0, opacity: 1, scale: 1 });
-      gsap.set(tCard1, { x: 0, y: 20, rotation: 8, scale: 0.95, opacity: 1, zIndex: 25, filter: "blur(0px)" });
-      gsap.set(tCard0, { x: -380, y: 40, rotation: -12, scale: 0.88, opacity: 0, zIndex: 5 });
-      gsap.set(tCard2, { x: 380, y: 40, rotation: 12, scale: 0.88, opacity: 0, zIndex: 10, filter: "blur(2px)" });
-      gsap.set(tCard3, { x: 700, y: 80, rotation: 20, scale: 0.8, opacity: 0, zIndex: 5 });
-    }
-    setInitialEnvelopeState();
-
-    function showSarahCentered() {
-      gsap.to(tCard0, { x: -370, y: 28, rotation: -12, scale: 0.9, opacity: 0.6, filter: "blur(1px)", duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard1, { x: 0, y: -10, rotation: 0, scale: 1, opacity: 1, zIndex: 25, filter: "blur(0px)", duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard2, { x: 370, y: 28, rotation: 12, scale: 0.9, opacity: 0.45, zIndex: 15, filter: "blur(2px)", duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard3, { x: 700, y: 80, rotation: 20, scale: 0.8, opacity: 0, duration: 0.75, ease: "power3.inOut" });
-    }
-
-    function showJamesCentered() {
-      gsap.to(tCard0, { x: -700, y: 80, rotation: -20, scale: 0.8, opacity: 0, duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard1, { x: -370, y: 28, rotation: -12, scale: 0.9, opacity: 0.45, zIndex: 15, filter: "blur(2px)", duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard2, { x: 0, y: -10, rotation: 0, scale: 1, opacity: 1, zIndex: 25, filter: "blur(0px)", duration: 0.75, ease: "power3.inOut" });
-      gsap.to(tCard3, { x: 370, y: 28, rotation: 12, scale: 0.9, opacity: 0.6, zIndex: 15, filter: "blur(1px)", duration: 0.75, ease: "power3.inOut" });
+      dotEls.forEach((dot, idx) => {
+        if (idx === activeReviewIdx) {
+          dot.className = "h-2 rounded-full transition-all duration-300 bg-dark dark:bg-emerald-400 w-6";
+        } else {
+          dot.className = "h-2 rounded-full transition-all duration-300 bg-gray-300 dark:bg-gray-700 w-2";
+        }
+      });
     }
 
     ScrollTrigger.create({
       trigger: "#testimonials",
-      start: "top 65%",
+      start: "top 68%",
       onEnter: () => {
+        if (envelopeExtracted) return;
+        envelopeExtracted = true;
         const tl = gsap.timeline();
         tl.to([envBack, envFront], {
-          y: 160,
+          y: 165,
           opacity: 0,
           duration: 0.85,
           ease: "power3.inOut"
         }, 0)
-        .add(() => showSarahCentered(), 0.15)
-        .add(() => showJamesCentered(), 1.8);
+        .add(() => {
+          activeReviewIdx = 0;
+          renderReviewDeck(true);
+        }, 0.12)
+        .add(() => {
+          activeReviewIdx = 1;
+          renderReviewDeck(true);
+        }, 1.85);
+      },
+      onLeaveBack: () => {
+        setInitialEnvelopeState();
       }
     });
 
-    tCard1.addEventListener("click", showSarahCentered);
-    tCard2.addEventListener("click", showJamesCentered);
-    document.getElementById("prev-test").addEventListener("click", showSarahCentered);
-    document.getElementById("next-test").addEventListener("click", showJamesCentered);
+    document.getElementById("prev-test").addEventListener("click", () => {
+      if (!envelopeExtracted) {
+        envelopeExtracted = true;
+        gsap.to([envBack, envFront], { y: 165, opacity: 0, duration: 0.5 });
+      }
+      activeReviewIdx = (activeReviewIdx - 1 + tourismReviews.length) % tourismReviews.length;
+      renderReviewDeck(true);
+    });
+
+    document.getElementById("next-test").addEventListener("click", () => {
+      if (!envelopeExtracted) {
+        envelopeExtracted = true;
+        gsap.to([envBack, envFront], { y: 165, opacity: 0, duration: 0.5 });
+      }
+      activeReviewIdx = (activeReviewIdx + 1) % tourismReviews.length;
+      renderReviewDeck(true);
+    });
+
+    // Auto-advance review slides every 4.5s once envelope has opened
+    setInterval(() => {
+      if (envelopeExtracted) {
+        activeReviewIdx = (activeReviewIdx + 1) % tourismReviews.length;
+        renderReviewDeck(true);
+      }
+    }, 4500);
 
     /* -----------------------------------------------------------
-       6. SECTION 6: TripSync footer wordmark reveal
+       7. SECTION 6: FOOTER WORDMARK REVEAL (100% Sharp & Unblurred)
     ----------------------------------------------------------- */
     document.querySelectorAll(".footer-char").forEach((charEl, idx) => {
-      const targetBlur = parseFloat(charEl.dataset.blur || 0);
       gsap.fromTo(charEl,
         {
-          y: 125,
-          rotation: 12,
-          opacity: 0.15,
-          filter: "blur(16px)"
+          y: 115,
+          rotation: 10,
+          opacity: 0,
+          filter: "blur(14px)"
         },
         {
           y: 0,
           rotation: 0,
           opacity: 1,
-          filter: `blur(${targetBlur}px)`,
-          duration: 1.1,
-          delay: idx * 0.055,
+          filter: "blur(0px)", // Completely sharp across all letters
+          duration: 1.0,
+          delay: idx * 0.05,
           ease: "power3.out",
           scrollTrigger: {
             trigger: "#footer-section",
-            start: "top 85%",
+            start: "top 90%",
             toggleActions: "play none none reverse"
           }
         }
       );
+    });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => ScrollTrigger.refresh(), 250);
     });
   </script>
 </body>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { UserButton } from '@clerk/react';
 import { useTrip } from '../context/TripContext.js';
 import { Avatar, AvatarStack } from './Avatar.js';
 import { Sparkles, Plus, Wallet, Users, Compass, UserCheck, RefreshCw } from 'lucide-react';
@@ -31,11 +30,13 @@ export const Header: React.FC = () => {
             onClick={() => navigateTo('dashboard')}
             className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
-              <Compass className="w-5 h-5" />
-            </div>
+            <img
+              src="/tripsync-logo.svg"
+              alt=""
+              className="w-9 h-9 rounded-full object-contain shadow-sm group-hover:scale-105 transition-transform"
+            />
             <span className="font-extrabold text-lg tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
-              GrouptripLedger
+              TripSync
             </span>
           </div>
 
@@ -110,8 +111,6 @@ export const Header: React.FC = () => {
             <RefreshCw className="w-4 h-4" />
           </button>
 
-          {/* Clerk User Account Button */}
-          <UserButton afterSignOutUrl="/" />
         </div>
       </div>
 

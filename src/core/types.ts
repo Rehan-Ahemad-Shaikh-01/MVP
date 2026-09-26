@@ -25,6 +25,7 @@ export type SplitType =
   | 'participant_weighted'
   | 'shared_room'
   | 'activity_based'
+  | 'custom'
   | 'organizer_paid';
 
 export type PaymentMethod = 'cash' | 'upi' | 'card' | 'pool' | 'bank_transfer';
@@ -83,10 +84,14 @@ export interface WeightedSplitConfig {
   weights: Record<string, number>; // memberId -> weight (e.g. 1.0, 2.0, 0.5)
 }
 
+export interface CustomSplitConfig {
+  shares: Record<string, number>; // memberId -> explicitly assigned minor units
+}
+
 export interface SplitRule {
   id: string;
   type: SplitType;
-  config?: SharedRoomConfig | WeightedSplitConfig | Record<string, any> | null;
+  config?: SharedRoomConfig | WeightedSplitConfig | CustomSplitConfig | Record<string, any> | null;
 }
 
 /**
@@ -124,6 +129,7 @@ export interface Payment {
   currency: Currency;
   method: PaymentMethod;
   appliesToCostItemId?: string | null; // null = general pool contribution or trip settlement
+  refundForCostItemId?: string | null; // Vendor refund credited back to the trip pool
   status: PaymentStatus;
   notes?: string | null;
   createdAt: string;

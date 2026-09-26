@@ -1,6 +1,7 @@
 import {
   CostItem,
   CostItemShareBreakdown,
+  CustomSplitConfig,
   Member,
   SharedRoomConfig,
   SplitRule,
@@ -33,12 +34,13 @@ export function distributeEqualWithRemainder(
   participantIds: string[]
 ): Record<string, number> {
   const result: Record<string, number> = {};
-  if (participantIds.length === 0 || totalAmount <= 0) {
+  const uniqueIds = [...new Set(participantIds)];
+  if (uniqueIds.length === 0 || !Number.isSafeInteger(totalAmount) || totalAmount <= 0) {
     return result;
   }
 
   // Sort deterministically
-  const sortedIds = [...participantIds].sort();
+  const sortedIds = uniqueIds.sort();
   const count = sortedIds.length;
   const baseShare = Math.floor(totalAmount / count);
   let remainder = totalAmount % count;
@@ -57,7 +59,7 @@ export function distributeEqualWithRemainder(
  * Total divided equally among active item participants.
  */
 export const equalSplitStrategy: SplitStrategyFn = (costItem, members, _tripOwnerId) => {
-  const participantIds = costItem.participants.map(p => p.memberId);
+  const participantIds = [...new Set(costItem.participants.map(p => p.memberId))];
   const shares = distributeEqualWithRemainder(costItem.totalAmount, participantIds);
   const explanations: Record<string, string> = {};
 
@@ -76,11 +78,11 @@ export const equalSplitStrategy: SplitStrategyFn = (costItem, members, _tripOwne
  */
 export const participantWeightedSplitStrategy: SplitStrategyFn = (costItem, members, _tripOwnerId) => {
   const config = costItem.splitRule.config as WeightedSplitConfig | undefined;
-  const participantIds = costItem.participants.map(p => p.memberId);
+  const participantIds = [...new Set(costItem.participants.map(p => p.memberId))];
   const memberShares: Record<string, number> = {};
   const explanations: Record<string, string> = {};
 
-  if (participantIds.length === 0 || costItem.totalAmount <= 0) {
+  if (participantIds.length === 0 || !Number.isSafeInteger(costItem.totalAmount) || costItem.totalAmount <= 0) {
     return { memberShares, explanations };
   }
 
@@ -88,15 +90,16 @@ export const participantWeightedSplitStrategy: SplitStrategyFn = (costItem, memb
   const weights: Record<string, number> = {};
   let totalWeight = 0;
 
-  for (const p of costItem.participants) {
+  for (const p of costItem.participants.filter((participant, index, all) => all.findIndex((candidate) => candidate.memberId === participant.memberId) === index)) {
     const configWeight = config?.weights?.[p.memberId];
     const overrideWeight = p.overrideShare;
-    const weight = overrideWeight ?? configWeight ?? 1.0;
+    const candidateWeight = overrideWeight ?? configWeight ?? 1.0;
+    const weight = Number.isFinite(candidateWeight) && candidateWeight > 0 ? candidateWeight : 1.0;
     weights[p.memberId] = weight;
     totalWeight += weight;
   }
 
-  if (totalWeight <= 0) {
+  if (!Number.isFinite(totalWeight) || totalWeight <= 0) {
     return equalSplitStrategy(costItem, members, _tripOwnerId);
   }
 
@@ -153,6 +156,9 @@ export const sharedRoomSplitStrategy: SplitStrategyFn = (costItem, members, _tri
   }
 
   const rooms = config.rooms;
+  if (new Set(rooms.map((room) => room.roomId)).size !== rooms.length) {
+    return equalSplitStrategy(costItem, members, _tripOwnerId);
+  }
   const roomsWithCost = rooms.filter(r => typeof r.costOverride === 'number' && r.costOverride > 0);
   const costOverrideSum = roomsWithCost.reduce((sum, r) => sum + (r.costOverride || 0), 0);
   const unassignedRooms = rooms.filter(r => typeof r.costOverride !== 'number' || r.costOverride <= 0);
@@ -160,9 +166,19 @@ export const sharedRoomSplitStrategy: SplitStrategyFn = (costItem, members, _tri
   const remainingAmount = Math.max(0, costItem.totalAmount - costOverrideSum);
   const roomAmounts: Record<string, number> = {};
 
-  // Assign overrides
-  for (const r of roomsWithCost) {
-    roomAmounts[r.roomId] = r.costOverride!;
+  // Normalize legacy room overrides that exceed the expense so shares still reconcile.
+  if (costOverrideSum > costItem.totalAmount) {
+    const allocations = roomsWithCost.map((room) => {
+      const exact = costItem.totalAmount * room.costOverride! / costOverrideSum;
+      return { roomId: room.roomId, amount: Math.floor(exact), fraction: exact - Math.floor(exact) };
+    });
+    let remainder = costItem.totalAmount - allocations.reduce((sum, allocation) => sum + allocation.amount, 0);
+    allocations.sort((a, b) => b.fraction - a.fraction || a.roomId.localeCompare(b.roomId));
+    for (const allocation of allocations) {
+      roomAmounts[allocation.roomId] = allocation.amount + (remainder-- > 0 ? 1 : 0);
+    }
+  } else {
+    for (const r of roomsWithCost) roomAmounts[r.roomId] = r.costOverride!;
   }
 
   // Distribute unassigned room amounts equally across unassigned rooms
@@ -176,7 +192,7 @@ export const sharedRoomSplitStrategy: SplitStrategyFn = (costItem, members, _tri
 
   // Now split each room's cost among its occupants
   for (const room of rooms) {
-    const occupants = room.occupantMemberIds || [];
+    const occupants = [...new Set(room.occupantMemberIds || [])];
     const roomCost = roomAmounts[room.roomId] || 0;
     const roomName = room.roomName || `Room ${room.roomId}`;
 
@@ -197,7 +213,7 @@ export const sharedRoomSplitStrategy: SplitStrategyFn = (costItem, members, _tri
  * Only members who explicitly opted into the activity pay for it; non-participants owe 0.
  */
 export const activityBasedSplitStrategy: SplitStrategyFn = (costItem, members, _tripOwnerId) => {
-  const participantIds = costItem.participants.map(p => p.memberId);
+  const participantIds = [...new Set(costItem.participants.map(p => p.memberId))];
   const memberShares: Record<string, number> = {};
   const explanations: Record<string, string> = {};
 
@@ -220,6 +236,41 @@ export const activityBasedSplitStrategy: SplitStrategyFn = (costItem, members, _
   }
 
   return { memberShares, explanations };
+};
+
+/**
+ * CUSTOM SPLIT
+ * Uses explicit per-member amounts and leaves any unassigned remainder with the payer.
+ * Allocations must be positive in total and strictly less than the expense amount.
+ */
+export const customSplitStrategy: SplitStrategyFn = (costItem, members, _tripOwnerId) => {
+  const config = costItem.splitRule.config as CustomSplitConfig | undefined;
+  const participantIds = new Set(costItem.participants.map((participant) => participant.memberId));
+  const shares: Record<string, number> = {};
+  const explanations: Record<string, string> = {};
+  const configuredShares = config?.shares || {};
+
+  for (const memberId of participantIds) {
+    const amount = configuredShares[memberId] ?? 0;
+    if (!Number.isSafeInteger(amount) || amount < 0) {
+      return { memberShares: {}, explanations: {} };
+    }
+    shares[memberId] = amount;
+  }
+
+  const assignedTotal = Object.values(shares).reduce((sum, amount) => sum + amount, 0);
+  if (!Number.isSafeInteger(assignedTotal) || assignedTotal <= 0 || assignedTotal >= costItem.totalAmount) {
+    return { memberShares: {}, explanations: {} };
+  }
+
+  for (const member of members) {
+    const amount = shares[member.id] || 0;
+    explanations[member.id] = participantIds.has(member.id)
+      ? `Custom share (${(amount / 100).toFixed(2)} ${costItem.currency})`
+      : `Not included in this expense (0.00 ${costItem.currency})`;
+  }
+
+  return { memberShares: shares, explanations };
 };
 
 /**
@@ -253,6 +304,7 @@ export const splitStrategies: Record<SplitType, SplitStrategyFn> = {
   participant_weighted: participantWeightedSplitStrategy,
   shared_room: sharedRoomSplitStrategy,
   activity_based: activityBasedSplitStrategy,
+  custom: customSplitStrategy,
   organizer_paid: organizerPaidSplitStrategy,
 };
 
